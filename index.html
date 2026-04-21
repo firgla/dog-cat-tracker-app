@@ -30,7 +30,8 @@
 
         button,
         input,
-        select {
+        select,
+        textarea {
             font: inherit;
         }
 
@@ -296,7 +297,8 @@
         }
 
         input,
-        select {
+        select,
+        textarea {
             width: 100%;
             height: 58px;
             border: 2px solid var(--pastel-purple);
@@ -306,6 +308,12 @@
             background: var(--light-beige);
             outline: none;
             text-align: left;
+        }
+
+        textarea {
+            min-height: 92px;
+            height: 92px;
+            resize: vertical;
         }
 
         input[type="file"] {
@@ -335,7 +343,8 @@
         }
 
         input:focus,
-        select:focus {
+        select:focus,
+        textarea:focus {
             border-color: var(--hot-orange);
         }
 
@@ -470,6 +479,21 @@
             line-height: 1.05;
         }
 
+        .care-fields {
+            display: grid;
+            gap: 0;
+            width: 100%;
+            justify-items: stretch;
+        }
+
+        .care-fields input,
+        .care-fields textarea {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+        }
+
         .next-date {
             min-width: 130px;
             padding: 11px 14px;
@@ -482,17 +506,19 @@
         }
 
         .reminders-title {
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .reminders {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
-            margin-top: 4px;
+            margin-top: 0;
         }
 
         .reminder-option {
+            display: block;
+            margin: 0;
             position: relative;
         }
 
@@ -523,7 +549,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-top: 18px;
+            margin-top: 12px;
         }
 
         @media (max-width: 560px) {
@@ -935,8 +961,10 @@
             CARE_TYPES.forEach((item) => {
                 care[item.key] = {
                     date: "",
+                    reminderInterval: "",
                     medicine: "",
                     intervalDays: "",
+                    note: "",
                     reminders: [...DEFAULT_REMINDERS]
                 };
             });
@@ -968,8 +996,10 @@
                 const oldCare = pet.care?.[item.key] || {};
                 normalized.care[item.key] = {
                     date: oldCare.date || oldCare.vaccinationDate || "",
+                    reminderInterval: oldCare.reminderInterval || "",
                     medicine: oldCare.medicine || "",
                     intervalDays: oldCare.intervalDays || "",
+                    note: oldCare.note || "",
                     reminders: Array.isArray(oldCare.reminders) && oldCare.reminders.length
                         ? oldCare.reminders.map(Number)
                         : [...DEFAULT_REMINDERS]
@@ -1208,45 +1238,63 @@
                         <div class="next-date">${nextDate || "Нет даты"}</div>
                     </div>
 
-                    <label for="${careType.key}_date">Дата вакцинации / обработки</label>
-                    <input
-                        id="${careType.key}_date"
-                        type="date"
-                        value="${escapeHtml(care.date)}"
-                        onchange="updateCareField('${pet.id}', '${careType.key}', 'date', this.value)"
-                    >
+                    <div class="care-fields">
+                        <label for="${careType.key}_date">Дата вакцинации / обработки</label>
+                        <input
+                            id="${careType.key}_date"
+                            type="date"
+                            value="${escapeHtml(care.date)}"
+                            onchange="updateCareField('${pet.id}', '${careType.key}', 'date', this.value)"
+                        >
 
-                    <label for="${careType.key}_medicine">Препарат</label>
-                    <input
-                        id="${careType.key}_medicine"
-                        type="text"
-                        placeholder="Название препарата"
-                        value="${escapeHtml(care.medicine)}"
-                        oninput="updateCareField('${pet.id}', '${careType.key}', 'medicine', this.value, false)"
-                    >
+                        <label for="${careType.key}_reminder_interval">Препарат / интервал напоминаний</label>
+                        <input
+                            id="${careType.key}_reminder_interval"
+                            type="text"
+                            placeholder="Например, схема или особые сроки"
+                            value="${escapeHtml(care.reminderInterval)}"
+                            oninput="updateCareField('${pet.id}', '${careType.key}', 'reminderInterval', this.value, false)"
+                        >
 
-                    <label for="${careType.key}_interval">Интервал до следующей процедуры, дней</label>
-                    <input
-                        id="${careType.key}_interval"
-                        type="number"
-                        min="1"
-                        placeholder="Например, 365"
-                        value="${escapeHtml(care.intervalDays)}"
-                        onchange="updateCareField('${pet.id}', '${careType.key}', 'intervalDays', this.value)"
-                    >
+                        <label for="${careType.key}_note">Заметка</label>
+                        <textarea
+                            id="${careType.key}_note"
+                            placeholder="Например, реакция, рекомендации врача или важные детали"
+                            oninput="updateCareField('${pet.id}', '${careType.key}', 'note', this.value, false)"
+                        >${escapeHtml(care.note)}</textarea>
 
-                    <label class="reminders-title">Напоминания</label>
-                    <div class="reminders">
-                        ${DEFAULT_REMINDERS.map((day) => `
-                            <label class="reminder-option">
-                                <input
-                                    type="checkbox"
-                                    ${care.reminders.includes(day) ? "checked" : ""}
-                                    onchange="toggleReminder('${pet.id}', '${careType.key}', ${day}, this.checked)"
-                                >
-                                <span>за ${day} ${pluralizeDays(day)}</span>
-                            </label>
-                        `).join("")}
+                        <label for="${careType.key}_medicine">Препарат</label>
+                        <input
+                            id="${careType.key}_medicine"
+                            type="text"
+                            placeholder="Название препарата"
+                            value="${escapeHtml(care.medicine)}"
+                            oninput="updateCareField('${pet.id}', '${careType.key}', 'medicine', this.value, false)"
+                        >
+
+                        <label for="${careType.key}_interval">Интервал до следующей процедуры, дней</label>
+                        <input
+                            id="${careType.key}_interval"
+                            type="number"
+                            min="1"
+                            placeholder="Например, 365"
+                            value="${escapeHtml(care.intervalDays)}"
+                            onchange="updateCareField('${pet.id}', '${careType.key}', 'intervalDays', this.value)"
+                        >
+
+                        <label class="reminders-title">Напоминания</label>
+                        <div class="reminders">
+                            ${DEFAULT_REMINDERS.map((day) => `
+                                <label class="reminder-option">
+                                    <input
+                                        type="checkbox"
+                                        ${care.reminders.includes(day) ? "checked" : ""}
+                                        onchange="toggleReminder('${pet.id}', '${careType.key}', ${day}, this.checked)"
+                                    >
+                                    <span>за ${day} ${pluralizeDays(day)}</span>
+                                </label>
+                            `).join("")}
+                        </div>
                     </div>
                 </section>
             `;
@@ -1341,6 +1389,8 @@
                         return {
                             title: careType.title,
                             date: care.date,
+                            reminderInterval: care.reminderInterval,
+                            note: care.note,
                             medicine: care.medicine,
                             intervalDays: care.intervalDays,
                             nextDate: calculateNextDate(care.date, care.intervalDays),
