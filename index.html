@@ -420,6 +420,55 @@
             font-size: 30px;
         }
 
+        .important-info {
+            margin-bottom: 18px;
+            border: 2px solid var(--pastel-purple);
+            border-radius: 22px;
+            background: var(--light-beige);
+            overflow: hidden;
+        }
+
+        .important-info summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 58px;
+            padding: 15px 18px;
+            color: var(--dark-purple);
+            cursor: pointer;
+            font-weight: 900;
+            list-style: none;
+        }
+
+        .important-info summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .important-info summary::after {
+            content: "+";
+            display: grid;
+            place-items: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 12px;
+            background: var(--light-orange);
+            color: var(--hot-orange);
+            flex-shrink: 0;
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .important-info[open] summary::after {
+            content: "-";
+        }
+
+        .important-info-content {
+            padding: 0 18px 18px;
+            white-space: pre-wrap;
+            line-height: 1.45;
+        }
+
         .chips {
             display: flex;
             flex-wrap: wrap;
@@ -660,6 +709,12 @@
 
                 <label for="pet_birth_date">Дата рождения</label>
                 <input id="pet_birth_date" type="date">
+
+                <label for="pet_important_info">Важная информация</label>
+                <textarea
+                    id="pet_important_info"
+                    placeholder="Например, противопоказанные препараты, аллергии, особенности породы или рекомендации врача"
+                ></textarea>
 
                 <div class="photo-field">
                     <label for="pet_photo_file">Фотография</label>
@@ -981,6 +1036,7 @@
                 type: base.type || "dog",
                 breed: base.breed || BREEDS.dog[0],
                 birthDate: base.birthDate || "",
+                importantInfo: base.importantInfo || "",
                 photo: base.photo || "",
                 care
             });
@@ -994,6 +1050,7 @@
                 type,
                 breed: pet.breed || BREEDS[type][0],
                 birthDate: pet.birthDate || "",
+                importantInfo: pet.importantInfo || "",
                 photo: pet.photo || "",
                 care: {}
             };
@@ -1040,6 +1097,7 @@
                     document.getElementById("pet_type").value = pet.type;
                     populateBreeds(pet.breed);
                     document.getElementById("pet_birth_date").value = pet.birthDate;
+                    document.getElementById("pet_important_info").value = pet.importantInfo;
                     document.getElementById("pet_photo_file").value = "";
                     uploadedPhotoData = pet.photo || "";
                     updatePhotoPreview(pet.photo);
@@ -1049,6 +1107,7 @@
                 document.getElementById("pet_type").value = "dog";
                 populateBreeds();
                 document.getElementById("pet_birth_date").value = "";
+                document.getElementById("pet_important_info").value = "";
                 document.getElementById("pet_photo_file").value = "";
                 updatePhotoPreview("");
             }
@@ -1111,6 +1170,7 @@
             const type = document.getElementById("pet_type").value;
             const breed = document.getElementById("pet_breed").value;
             const birthDate = document.getElementById("pet_birth_date").value;
+            const importantInfo = document.getElementById("pet_important_info").value.trim();
             const photo = uploadedPhotoData;
 
             if (!name) {
@@ -1125,10 +1185,11 @@
                 pet.type = type;
                 pet.breed = breed;
                 pet.birthDate = birthDate;
+                pet.importantInfo = importantInfo;
                 pet.photo = photo;
                 selectedPetId = pet.id;
             } else {
-                const pet = createPet({ name, type, breed, birthDate, photo });
+                const pet = createPet({ name, type, breed, birthDate, importantInfo, photo });
                 appState.pets.unshift(pet);
                 selectedPetId = pet.id;
             }
@@ -1203,6 +1264,8 @@
                     </div>
                 </section>
 
+                ${renderImportantInfo(pet)}
+
                 <nav class="tabs">
                     ${CARE_TYPES.map((careType) => `
                         <button
@@ -1227,6 +1290,20 @@
         function setActiveCare(careKey) {
             activeCareKey = careKey;
             renderDetail();
+        }
+
+        function renderImportantInfo(pet) {
+            const text = pet.importantInfo?.trim();
+            if (!text) {
+                return "";
+            }
+
+            return `
+                <details class="important-info">
+                    <summary>Важная информация</summary>
+                    <div class="important-info-content">${escapeHtml(text)}</div>
+                </details>
+            `;
         }
 
         function renderActiveCare(pet) {
@@ -1389,6 +1466,7 @@
                     type: formatType(pet.type),
                     breed: pet.breed,
                     birthDate: pet.birthDate,
+                    importantInfo: pet.importantInfo,
                     photo: pet.photo,
                     care: CARE_TYPES.map((careType) => {
                         const care = pet.care[careType.key];
