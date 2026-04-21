@@ -3,22 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pet Care Tracker</title>
+    <title>Pet Vitals</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg: #f7f1e8;
-            --surface: rgba(255, 252, 246, 0.92);
-            --surface-strong: #ffffff;
-            --text: #2d241d;
-            --muted: #7a685c;
-            --line: rgba(92, 71, 56, 0.12);
-            --accent: #d66f42;
-            --accent-dark: #a74f2a;
-            --accent-soft: rgba(214, 111, 66, 0.14);
-            --success: #2f8f63;
-            --warning: #c8852f;
-            --shadow: 0 16px 40px rgba(87, 58, 33, 0.12);
+            --pastel-purple: #C4C3E3;
+            --dark-purple: #504E76;
+            --light-beige: #FDF8E2;
+            --calm-green: #A3B565;
+            --light-orange: #FCDD9D;
+            --hot-orange: #F1642E;
         }
 
         * {
@@ -26,335 +20,430 @@
         }
 
         body {
+            min-height: 100vh;
             margin: 0;
-            padding: 20px 14px 36px;
+            padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            color: var(--text);
-            background:
-                radial-gradient(circle at top left, rgba(255, 216, 183, 0.9), transparent 36%),
-                radial-gradient(circle at top right, rgba(251, 238, 211, 0.9), transparent 28%),
-                linear-gradient(180deg, #fff8ef 0%, #f8efe4 45%, #f2e5d6 100%);
+            color: var(--dark-purple);
+            background: var(--light-beige);
         }
 
-        .app-shell {
-            max-width: 760px;
-            margin: 0 auto;
-        }
-
-        .hero,
-        .card,
-        .pet-profile,
-        .care-item {
-            background: var(--surface);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.45);
-            box-shadow: var(--shadow);
-            border-radius: 24px;
-        }
-
-        .hero {
-            padding: 24px;
-            margin-bottom: 16px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .hero::after {
-            content: "";
-            position: absolute;
-            right: -30px;
-            bottom: -40px;
-            width: 160px;
-            height: 160px;
-            background: radial-gradient(circle, rgba(214, 111, 66, 0.18), transparent 65%);
-            pointer-events: none;
-        }
-
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.72);
-            color: var(--accent-dark);
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-
-        h1 {
-            margin: 14px 0 8px;
-            font-size: 30px;
-            line-height: 1.05;
-        }
-
-        .hero p,
-        .section-subtitle,
-        .empty-state p,
-        .reminder-note,
-        .hint {
-            color: var(--muted);
-        }
-
-        .hero p {
-            margin: 0;
-            max-width: 560px;
-            line-height: 1.45;
-        }
-
-        .layout {
-            display: grid;
-            grid-template-columns: 1.08fr 0.92fr;
-            gap: 16px;
-        }
-
-        .card {
-            padding: 20px;
-        }
-
-        .section-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        h2,
-        h3 {
-            margin: 0;
-        }
-
-        h2 {
-            font-size: 22px;
-        }
-
-        h3 {
-            font-size: 18px;
-        }
-
-        .section-subtitle {
-            font-size: 14px;
-            margin-top: 4px;
-        }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-        }
-
-        label {
-            display: block;
-            margin: 12px 0 8px;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--muted);
-        }
-
+        button,
         input,
         select {
-            width: 100%;
-            border: 1px solid var(--line);
-            background: rgba(255, 255, 255, 0.9);
-            color: var(--text);
-            padding: 13px 14px;
-            border-radius: 14px;
-            font-size: 15px;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-            appearance: none;
-        }
-
-        input:focus,
-        select:focus {
-            outline: none;
-            border-color: rgba(214, 111, 66, 0.55);
-            box-shadow: 0 0 0 4px rgba(214, 111, 66, 0.12);
-            transform: translateY(-1px);
-        }
-
-        .button-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 18px;
+            font: inherit;
         }
 
         button {
-            border: none;
+            border: 0;
             cursor: pointer;
-            border-radius: 16px;
-            font-size: 15px;
-            font-weight: 700;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+            color: var(--dark-purple);
         }
 
-        button:hover {
-            transform: translateY(-1px);
+        .app {
+            min-height: 100vh;
+            max-width: 640px;
+            margin: 0 auto;
+            background: var(--light-beige);
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent), #e28f5f);
-            color: white;
-            padding: 14px 18px;
-            box-shadow: 0 14px 30px rgba(214, 111, 66, 0.28);
-            flex: 1;
+        .top-cloud {
+            height: 82px;
+            border-radius: 0 0 30px 30px;
+            background: var(--pastel-purple);
         }
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.86);
-            color: var(--text);
-            padding: 14px 18px;
-            border: 1px solid var(--line);
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 24px 26px 26px;
+            background: var(--light-beige);
+            border-bottom: 2px solid var(--pastel-purple);
         }
 
-        .pets-list {
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo {
             display: grid;
-            gap: 12px;
+            place-items: center;
+            width: 54px;
+            height: 54px;
+            border-radius: 18px;
+            background: var(--light-orange);
+            color: var(--hot-orange);
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 28px;
+            line-height: 1;
+            letter-spacing: -0.03em;
+        }
+
+        .brand p {
+            margin: 6px 0 0;
+            color: var(--calm-green);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .round-action {
+            display: grid;
+            place-items: center;
+            min-width: 48px;
+            height: 48px;
+            padding: 0 16px;
+            border-radius: 18px;
+            background: var(--pastel-purple);
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .screen {
+            display: none;
+            padding: 26px;
+        }
+
+        .screen.active {
+            display: block;
+            animation: rise 0.22s ease;
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pet-list {
+            display: grid;
+            gap: 18px;
+        }
+
+        .pet-card,
+        .add-card,
+        .form-card,
+        .care-card {
+            border-radius: 26px;
+            background: var(--light-beige);
+            border: 2px solid var(--pastel-purple);
         }
 
         .pet-card {
             display: grid;
-            grid-template-columns: 74px 1fr;
-            gap: 14px;
-            padding: 14px;
-            background: rgba(255, 255, 255, 0.84);
-            border-radius: 20px;
-            border: 1px solid transparent;
+            grid-template-columns: 150px 1fr 54px;
+            gap: 22px;
+            align-items: center;
+            width: 100%;
+            padding: 24px;
+            text-align: left;
         }
 
-        .pet-card.active {
-            border-color: rgba(214, 111, 66, 0.35);
-            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,244,237,0.94));
+        .pet-card:hover,
+        .add-card:hover,
+        .primary-btn:hover,
+        .secondary-btn:hover,
+        .tab-btn:hover {
+            transform: translateY(-1px);
         }
 
         .pet-photo,
-        .profile-photo {
+        .photo-preview {
+            display: grid;
+            place-items: center;
             overflow: hidden;
-            background: linear-gradient(135deg, #f1ddc5, #f9efe2);
+            background: var(--pastel-purple);
+            color: var(--dark-purple);
         }
 
         .pet-photo {
-            width: 74px;
-            height: 74px;
-            border-radius: 20px;
-        }
-
-        .profile-photo {
-            width: 96px;
-            height: 96px;
-            border-radius: 26px;
-            flex-shrink: 0;
+            width: 150px;
+            height: 150px;
+            border-radius: 24px;
+            font-size: 22px;
+            font-weight: 900;
         }
 
         .pet-photo img,
-        .profile-photo img {
+        .photo-preview img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
         }
 
-        .pet-type-badge,
-        .pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            border-radius: 999px;
-            padding: 7px 11px;
-            font-size: 12px;
-            font-weight: 700;
+        .pet-card h2 {
+            margin: 0 0 8px;
+            font-size: 30px;
+            letter-spacing: -0.03em;
         }
 
-        .pet-type-badge {
-            background: var(--accent-soft);
-            color: var(--accent-dark);
-            margin-bottom: 8px;
+        .pet-card p,
+        .empty-note,
+        .hint,
+        .meta-text {
+            margin: 0;
+            color: var(--dark-purple);
+            opacity: 0.82;
+            line-height: 1.45;
         }
 
-        .pet-name {
-            font-size: 18px;
+        .arrow {
+            display: grid;
+            place-items: center;
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: var(--pastel-purple);
+            color: var(--hot-orange);
+            font-size: 30px;
             font-weight: 800;
-            margin-bottom: 4px;
         }
 
-        .pet-meta,
-        .info-stack {
-            font-size: 14px;
-            color: var(--muted);
+        .add-card {
+            width: 100%;
+            padding: 36px 20px;
+            border-style: dashed;
+            background: var(--light-beige);
+            color: var(--dark-purple);
+        }
+
+        .add-card strong {
+            display: block;
+            margin-top: 12px;
+            font-size: 26px;
+            font-weight: 500;
+        }
+
+        .add-icon {
+            display: grid;
+            place-items: center;
+            width: 58px;
+            height: 58px;
+            margin: 0 auto;
+            border-radius: 20px;
+            background: var(--light-orange);
+            color: var(--hot-orange);
+            font-size: 36px;
+            font-weight: 300;
         }
 
         .empty-state {
-            text-align: center;
-            padding: 28px 16px;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 20px;
-            border: 1px dashed rgba(122, 104, 92, 0.2);
-        }
-
-        .pet-profile {
-            margin-top: 18px;
-            padding: 20px;
-        }
-
-        .profile-header {
-            display: flex;
-            gap: 16px;
-            align-items: center;
-            margin-bottom: 18px;
-        }
-
-        .profile-title {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .care-list {
             display: grid;
+            gap: 18px;
+            min-height: 54vh;
+            align-content: center;
+        }
+
+        .empty-note {
+            padding: 18px 20px;
+            border-radius: 22px;
+            background: var(--pastel-purple);
+            font-weight: 700;
+        }
+
+        .form-card,
+        .care-card {
+            padding: 24px;
+        }
+
+        .form-title,
+        .detail-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .form-title h2,
+        .detail-title h2 {
+            margin: 0;
+            font-size: 30px;
+            letter-spacing: -0.03em;
+        }
+
+        .back-btn {
+            display: grid;
+            place-items: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 17px;
+            background: var(--pastel-purple);
+            font-size: 28px;
+        }
+
+        label {
+            display: block;
+            margin: 16px 0 8px;
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--dark-purple);
+        }
+
+        input,
+        select {
+            width: 100%;
+            border: 2px solid var(--pastel-purple);
+            border-radius: 18px;
+            padding: 15px 16px;
+            color: var(--dark-purple);
+            background: var(--light-beige);
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--hot-orange);
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 14px;
         }
 
-        .care-item {
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.72);
-            border: 1px solid rgba(122, 104, 92, 0.12);
-            box-shadow: none;
+        .photo-line {
+            display: grid;
+            grid-template-columns: 116px 1fr;
+            gap: 14px;
+            align-items: end;
+        }
+
+        .photo-preview {
+            width: 116px;
+            height: 116px;
+            border-radius: 24px;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .primary-btn,
+        .secondary-btn {
+            width: 100%;
+            min-height: 58px;
+            border-radius: 20px;
+            margin-top: 22px;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .primary-btn {
+            background: var(--hot-orange);
+            color: var(--light-beige);
+        }
+
+        .secondary-btn {
+            background: var(--calm-green);
+            color: var(--light-beige);
+        }
+
+        .profile-hero {
+            display: grid;
+            grid-template-columns: 118px 1fr;
+            gap: 18px;
+            align-items: center;
+            margin-bottom: 18px;
+            padding: 18px;
+            border-radius: 26px;
+            background: var(--pastel-purple);
+        }
+
+        .profile-hero .pet-photo {
+            width: 118px;
+            height: 118px;
+        }
+
+        .profile-hero h2 {
+            margin: 0 0 8px;
+            font-size: 30px;
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--light-orange);
+            color: var(--dark-purple);
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .chip.green {
+            background: var(--calm-green);
+            color: var(--light-beige);
+        }
+
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 18px 0;
+        }
+
+        .tab-btn {
+            min-height: 58px;
+            border-radius: 18px;
+            padding: 10px;
+            background: var(--light-orange);
+            color: var(--dark-purple);
+            font-size: 13px;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+
+        .tab-btn.active {
+            background: var(--dark-purple);
+            color: var(--light-beige);
         }
 
         .care-head {
             display: flex;
             justify-content: space-between;
             gap: 12px;
-            align-items: start;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
-        .status-date {
-            text-align: right;
+        .care-head h3 {
+            margin: 0;
+            font-size: 24px;
+            line-height: 1.05;
         }
 
-        .status-date strong {
-            display: block;
-            font-size: 15px;
+        .next-date {
+            min-width: 130px;
+            padding: 12px;
+            border-radius: 18px;
+            background: var(--calm-green);
+            color: var(--light-beige);
+            text-align: center;
+            font-weight: 900;
         }
 
-        .pill {
-            background: rgba(47, 143, 99, 0.12);
-            color: var(--success);
-        }
-
-        .pill.warning {
-            background: rgba(200, 133, 47, 0.16);
-            color: var(--warning);
-        }
-
-        .reminder-group {
-            display: flex;
-            flex-wrap: wrap;
+        .reminders {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 8px;
             margin-top: 10px;
         }
@@ -370,101 +459,117 @@
         }
 
         .reminder-option span {
-            display: inline-flex;
-            padding: 9px 12px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.95);
-            border: 1px solid var(--line);
+            display: grid;
+            place-items: center;
+            min-height: 46px;
+            border: 2px solid var(--pastel-purple);
+            border-radius: 16px;
+            color: var(--dark-purple);
             font-size: 13px;
-            font-weight: 700;
-            color: var(--muted);
+            font-weight: 900;
         }
 
         .reminder-option input:checked + span {
-            color: white;
-            background: linear-gradient(135deg, var(--accent), #df8d5f);
-            border-color: transparent;
+            background: var(--hot-orange);
+            border-color: var(--hot-orange);
+            color: var(--light-beige);
         }
 
-        .save-inline {
-            margin-top: 14px;
-        }
-
-        .footer-actions {
-            display: flex;
-            justify-content: flex-end;
+        .bottom-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
             margin-top: 18px;
         }
 
-        .footer-actions button {
-            min-width: 190px;
-        }
-
-        @media (max-width: 760px) {
-            body {
-                padding: 14px 12px 28px;
+        @media (max-width: 560px) {
+            .top-cloud {
+                height: 66px;
+                border-radius: 0 0 24px 24px;
             }
 
-            .layout,
-            .grid-2 {
+            .header,
+            .screen {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            .pet-card {
+                grid-template-columns: 116px 1fr 44px;
+                gap: 14px;
+                padding: 18px;
+            }
+
+            .pet-photo {
+                width: 116px;
+                height: 116px;
+            }
+
+            .pet-card h2,
+            .brand h1,
+            .form-title h2,
+            .detail-title h2 {
+                font-size: 25px;
+            }
+
+            .arrow {
+                width: 44px;
+                height: 44px;
+            }
+
+            .field-grid,
+            .photo-line,
+            .profile-hero,
+            .bottom-actions {
                 grid-template-columns: 1fr;
             }
 
-            .hero {
-                padding: 20px;
+            .tabs {
+                grid-template-columns: 1fr 1fr;
             }
 
-            h1 {
-                font-size: 26px;
+            .care-head {
+                display: grid;
             }
 
-            .profile-header {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-
-            .button-row,
-            .section-head {
-                flex-direction: column;
-                align-items: stretch;
+            .next-date {
+                text-align: left;
             }
         }
     </style>
 </head>
 <body>
-    <div class="app-shell">
-        <section class="hero">
-            <span class="eyebrow">Pet Care Tracker</span>
-            <h1>Уход за питомцами в одном окне</h1>
-            <p>Добавляйте кошек и собак, храните даты вакцинаций и обработок, а также заранее отмечайте напоминания на 30, 7 или 1 день до следующей процедуры.</p>
+    <main class="app">
+        <div class="top-cloud"></div>
+
+        <header class="header">
+            <div class="brand">
+                <div class="logo">PV</div>
+                <div>
+                    <h1>Pet Vitals</h1>
+                    <p>здоровье питомца</p>
+                </div>
+            </div>
+            <button class="round-action" type="button" onclick="showPetForm()">+</button>
+        </header>
+
+        <section id="home_screen" class="screen active">
+            <div id="pets_list" class="pet-list"></div>
         </section>
 
-        <section class="layout">
-            <div class="card">
-                <div class="section-head">
-                    <div>
-                        <h2>Питомцы</h2>
-                        <div class="section-subtitle">Список всех добавленных карточек</div>
-                    </div>
-                    <button class="btn-secondary" type="button" onclick="resetPetForm()">Новый питомец</button>
-                </div>
-                <div id="pets_list" class="pets-list"></div>
-            </div>
-
-            <div class="card">
-                <div class="section-head">
-                    <div>
-                        <h2>Добавить питомца</h2>
-                        <div class="section-subtitle">Имя, тип, порода и фотография</div>
-                    </div>
+        <section id="form_screen" class="screen">
+            <div class="form-card">
+                <div class="form-title">
+                    <button class="back-btn" type="button" onclick="showHome()">‹</button>
+                    <h2 id="form_title">Добавить питомца</h2>
                 </div>
 
                 <label for="pet_name">Имя</label>
-                <input type="text" id="pet_name" placeholder="Например, Боня">
+                <input id="pet_name" type="text" placeholder="Например, Нора">
 
-                <div class="grid-2">
+                <div class="field-grid">
                     <div>
-                        <label for="pet_type">Тип питомца</label>
+                        <label for="pet_type">Тип животного</label>
                         <select id="pet_type" onchange="populateBreeds()">
                             <option value="dog">Собака</option>
                             <option value="cat">Кошка</option>
@@ -476,20 +581,29 @@
                     </div>
                 </div>
 
-                <label for="pet_photo_file">Фотография</label>
-                <input type="file" id="pet_photo_file" accept="image/*" onchange="handlePhotoUpload(event)">
-                <label for="pet_photo">Или ссылка на фото</label>
-                <input type="url" id="pet_photo" placeholder="Вставьте ссылку на фото">
-                <div class="hint">Можно загрузить фотографию с устройства или вставить ссылку на изображение. Если фото нет, покажем аккуратную заглушку.</div>
+                <label for="pet_birth_date">Дата рождения</label>
+                <input id="pet_birth_date" type="date">
 
-                <div class="button-row">
-                    <button class="btn-primary" type="button" onclick="savePet()">Сохранить питомца</button>
+                <div class="photo-line">
+                    <div id="photo_preview" class="photo-preview">PET</div>
+                    <div>
+                        <label for="pet_photo_file">Фотография</label>
+                        <input id="pet_photo_file" type="file" accept="image/*" onchange="handlePhotoUpload(event)">
+                    </div>
                 </div>
+
+                <label for="pet_photo">Или ссылка на фото</label>
+                <input id="pet_photo" type="url" placeholder="https://...">
+                <p class="hint">Если фото не выбрать, карточка останется с мягкой цветной заглушкой.</p>
+
+                <button class="primary-btn" type="button" onclick="savePet()">Сохранить питомца</button>
             </div>
         </section>
 
-        <section id="pet_profile_container"></section>
-    </div>
+        <section id="detail_screen" class="screen">
+            <div id="pet_detail"></div>
+        </section>
+    </main>
 
     <script>
         const tg = window.Telegram?.WebApp || null;
@@ -497,13 +611,14 @@
             tg.expand();
         }
 
-        const STORAGE_KEY = "pet-care-tracker-data-v1";
+        const STORAGE_KEY = "pet-care-tracker-data-v2";
+        const LEGACY_STORAGE_KEY = "pet-care-tracker-data-v1";
         const DEFAULT_REMINDERS = [30, 7, 1];
         const CARE_TYPES = [
-            { key: "complexVaccine", title: "Комплексная прививка" },
-            { key: "rabiesVaccine", title: "Прививка от бешенства" },
-            { key: "tickTreatment", title: "Обработка от клещей" },
-            { key: "parasiteTreatment", title: "Обработка от паразитов" }
+            { key: "complexVaccine", title: "Комплексная", shortTitle: "Комплекс" },
+            { key: "rabiesVaccine", title: "Бешенство", shortTitle: "Бешенство" },
+            { key: "tickTreatment", title: "Клещи", shortTitle: "Клещи" },
+            { key: "parasiteTreatment", title: "Паразиты", shortTitle: "Паразиты" }
         ];
 
         const BREEDS = {
@@ -538,24 +653,16 @@
         };
 
         let appState = loadState();
-        let selectedPetId = appState.pets[0]?.id || null;
-        let editingPetId = null;
+        let currentScreen = "home";
+        let selectedPetId = appState.pets[0]?.id || "";
+        let editingPetId = "";
+        let activeCareKey = CARE_TYPES[0].key;
         let uploadedPhotoData = "";
 
         function loadState() {
-            const raw = localStorage.getItem(STORAGE_KEY);
+            const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
             if (!raw) {
-                return {
-                    pets: [
-                        createPet({
-                            id: createId(),
-                            name: "Боня",
-                            type: "dog",
-                            breed: "Корги",
-                            photo: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=900&q=80"
-                        })
-                    ]
-                };
+                return { pets: [] };
             }
 
             try {
@@ -568,6 +675,10 @@
             }
         }
 
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        }
+
         function createId() {
             return "pet-" + Date.now() + "-" + Math.random().toString(16).slice(2, 8);
         }
@@ -576,7 +687,7 @@
             const care = {};
             CARE_TYPES.forEach((item) => {
                 care[item.key] = {
-                    vaccinationDate: "",
+                    date: "",
                     medicine: "",
                     intervalDays: "",
                     reminders: [...DEFAULT_REMINDERS]
@@ -588,40 +699,91 @@
                 name: base.name || "",
                 type: base.type || "dog",
                 breed: base.breed || BREEDS.dog[0],
+                birthDate: base.birthDate || "",
                 photo: base.photo || "",
                 care
             });
         }
 
         function normalizePet(pet) {
-            const base = createPetSkeleton(pet);
-            CARE_TYPES.forEach((item) => {
-                const current = pet.care?.[item.key] || {};
-                base.care[item.key] = {
-                    vaccinationDate: current.vaccinationDate || "",
-                    medicine: current.medicine || "",
-                    intervalDays: current.intervalDays || "",
-                    reminders: Array.isArray(current.reminders) && current.reminders.length
-                        ? current.reminders.map(Number)
-                        : [...DEFAULT_REMINDERS]
-                };
-            });
-            return base;
-        }
-
-        function createPetSkeleton(pet) {
-            return {
+            const type = pet.type === "cat" ? "cat" : "dog";
+            const normalized = {
                 id: pet.id || createId(),
                 name: pet.name || "",
-                type: pet.type === "cat" ? "cat" : "dog",
-                breed: pet.breed || BREEDS[pet.type === "cat" ? "cat" : "dog"][0],
+                type,
+                breed: pet.breed || BREEDS[type][0],
+                birthDate: pet.birthDate || "",
                 photo: pet.photo || "",
                 care: {}
             };
+
+            CARE_TYPES.forEach((item) => {
+                const oldCare = pet.care?.[item.key] || {};
+                normalized.care[item.key] = {
+                    date: oldCare.date || oldCare.vaccinationDate || "",
+                    medicine: oldCare.medicine || "",
+                    intervalDays: oldCare.intervalDays || "",
+                    reminders: Array.isArray(oldCare.reminders) && oldCare.reminders.length
+                        ? oldCare.reminders.map(Number)
+                        : [...DEFAULT_REMINDERS]
+                };
+            });
+
+            return normalized;
         }
 
-        function saveState() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        function setScreen(screen) {
+            currentScreen = screen;
+            document.getElementById("home_screen").classList.toggle("active", screen === "home");
+            document.getElementById("form_screen").classList.toggle("active", screen === "form");
+            document.getElementById("detail_screen").classList.toggle("active", screen === "detail");
+        }
+
+        function showHome() {
+            editingPetId = "";
+            setScreen("home");
+            renderHome();
+        }
+
+        function showPetForm(petId = "") {
+            editingPetId = petId;
+            uploadedPhotoData = "";
+            document.getElementById("form_title").innerText = petId ? "Изменить питомца" : "Добавить питомца";
+
+            if (petId) {
+                const pet = getPet(petId);
+                if (pet) {
+                    document.getElementById("pet_name").value = pet.name;
+                    document.getElementById("pet_type").value = pet.type;
+                    populateBreeds(pet.breed);
+                    document.getElementById("pet_birth_date").value = pet.birthDate;
+                    document.getElementById("pet_photo").value = pet.photo.startsWith("data:image") ? "" : pet.photo;
+                    document.getElementById("pet_photo_file").value = "";
+                    uploadedPhotoData = pet.photo.startsWith("data:image") ? pet.photo : "";
+                    updatePhotoPreview(pet.photo);
+                }
+            } else {
+                document.getElementById("pet_name").value = "";
+                document.getElementById("pet_type").value = "dog";
+                populateBreeds();
+                document.getElementById("pet_birth_date").value = "";
+                document.getElementById("pet_photo").value = "";
+                document.getElementById("pet_photo_file").value = "";
+                updatePhotoPreview("");
+            }
+
+            setScreen("form");
+        }
+
+        function showDetail(petId) {
+            selectedPetId = petId;
+            activeCareKey = activeCareKey || CARE_TYPES[0].key;
+            setScreen("detail");
+            renderDetail();
+        }
+
+        function getPet(petId) {
+            return appState.pets.find((pet) => pet.id === petId);
         }
 
         function populateBreeds(selectedBreed) {
@@ -629,51 +791,41 @@
             const breedSelect = document.getElementById("pet_breed");
             const options = BREEDS[type] || [];
             breedSelect.innerHTML = options
-                .map((breed) => `<option value="${breed}">${breed}</option>`)
+                .map((breed) => `<option value="${escapeHtml(breed)}">${escapeHtml(breed)}</option>`)
                 .join("");
-
-            const breedToSelect = selectedBreed && options.includes(selectedBreed) ? selectedBreed : options[0];
-            breedSelect.value = breedToSelect;
-        }
-
-        function resetPetForm() {
-            editingPetId = null;
-            uploadedPhotoData = "";
-            document.getElementById("pet_name").value = "";
-            document.getElementById("pet_type").value = "dog";
-            populateBreeds();
-            document.getElementById("pet_photo").value = "";
-            document.getElementById("pet_photo_file").value = "";
-        }
-
-        function fillPetForm(pet) {
-            editingPetId = pet.id;
-            document.getElementById("pet_name").value = pet.name;
-            document.getElementById("pet_type").value = pet.type;
-            populateBreeds(pet.breed);
-            document.getElementById("pet_photo").value = pet.photo || "";
-            document.getElementById("pet_photo_file").value = "";
-            uploadedPhotoData = pet.photo?.startsWith("data:image") ? pet.photo : "";
+            breedSelect.value = selectedBreed && options.includes(selectedBreed) ? selectedBreed : options[0];
         }
 
         function handlePhotoUpload(event) {
             const file = event.target.files?.[0];
             if (!file) {
                 uploadedPhotoData = "";
+                updatePhotoPreview(document.getElementById("pet_photo").value.trim());
                 return;
             }
 
             const reader = new FileReader();
             reader.onload = () => {
                 uploadedPhotoData = reader.result;
+                updatePhotoPreview(uploadedPhotoData);
             };
             reader.readAsDataURL(file);
+        }
+
+        function updatePhotoPreview(photo) {
+            const preview = document.getElementById("photo_preview");
+            if (photo) {
+                preview.innerHTML = `<img src="${escapeHtml(photo)}" alt="Фото питомца">`;
+                return;
+            }
+            preview.innerHTML = "PET";
         }
 
         function savePet() {
             const name = document.getElementById("pet_name").value.trim();
             const type = document.getElementById("pet_type").value;
             const breed = document.getElementById("pet_breed").value;
+            const birthDate = document.getElementById("pet_birth_date").value;
             const photo = document.getElementById("pet_photo").value.trim() || uploadedPhotoData;
 
             if (!name) {
@@ -682,192 +834,188 @@
             }
 
             if (editingPetId) {
-                const pet = appState.pets.find((item) => item.id === editingPetId);
+                const pet = getPet(editingPetId);
                 if (!pet) return;
                 pet.name = name;
                 pet.type = type;
                 pet.breed = breed;
+                pet.birthDate = birthDate;
                 pet.photo = photo;
                 selectedPetId = pet.id;
             } else {
-                const pet = createPet({ name, type, breed, photo });
+                const pet = createPet({ name, type, breed, birthDate, photo });
                 appState.pets.unshift(pet);
                 selectedPetId = pet.id;
             }
 
             saveState();
-            render();
-            resetPetForm();
+            showDetail(selectedPetId);
         }
 
-        function selectPet(petId) {
-            selectedPetId = petId;
-            const pet = appState.pets.find((item) => item.id === petId);
-            if (pet) {
-                fillPetForm(pet);
-            }
-            renderPetProfile();
-        }
-
-        function formatType(type) {
-            return type === "cat" ? "Кошка" : "Собака";
-        }
-
-        function getFallbackPhoto(type) {
-            if (type === "cat") {
-                return "https://images.unsplash.com/photo-1519052537078-e6302a4968d4?auto=format&fit=crop&w=900&q=80";
-            }
-            return "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=900&q=80";
-        }
-
-        function renderPetsList() {
+        function renderHome() {
             const list = document.getElementById("pets_list");
 
             if (!appState.pets.length) {
                 list.innerHTML = `
                     <div class="empty-state">
-                        <h3>Пока нет питомцев</h3>
-                        <p>Добавьте первую карточку справа, и здесь появится список с быстрым переходом в вакцинации и обработки.</p>
+                        <p class="empty-note">Пока нет питомцев. Начните с первой карточки, а дальше мы добавим вакцинации и обработки.</p>
+                        <button class="add-card" type="button" onclick="showPetForm()">
+                            <span class="add-icon">+</span>
+                            <strong>Добавить питомца</strong>
+                        </button>
                     </div>
                 `;
                 return;
             }
 
-            list.innerHTML = appState.pets.map((pet) => {
-                const next = getNearestNextDate(pet);
-                return `
-                    <button type="button" class="pet-card ${pet.id === selectedPetId ? "active" : ""}" onclick="selectPet('${pet.id}')">
-                        <div class="pet-photo">
-                            <img src="${escapeHtml(pet.photo || getFallbackPhoto(pet.type))}" alt="${escapeHtml(pet.name)}">
-                        </div>
-                        <div style="text-align:left;">
-                            <div class="pet-type-badge">${formatType(pet.type)}</div>
-                            <div class="pet-name">${escapeHtml(pet.name)}</div>
-                            <div class="pet-meta">${escapeHtml(pet.breed)}</div>
-                            <div class="pet-meta" style="margin-top:8px;">${next ? "Ближайшая дата: " + next : "Даты процедур пока не заполнены"}</div>
-                        </div>
-                    </button>
-                `;
-            }).join("");
+            list.innerHTML = `
+                ${appState.pets.map((pet) => renderPetCard(pet)).join("")}
+                <button class="add-card" type="button" onclick="showPetForm()">
+                    <span class="add-icon">+</span>
+                    <strong>Добавить питомца</strong>
+                </button>
+            `;
         }
 
-        function renderPetProfile() {
-            const container = document.getElementById("pet_profile_container");
-            const pet = appState.pets.find((item) => item.id === selectedPetId);
+        function renderPetCard(pet) {
+            return `
+                <button class="pet-card" type="button" onclick="showDetail('${pet.id}')">
+                    <div class="pet-photo">${renderPhoto(pet)}</div>
+                    <div>
+                        <h2>${escapeHtml(pet.name)}</h2>
+                        <p>${formatType(pet.type)} · ${escapeHtml(pet.breed)}</p>
+                        <p>${pet.birthDate ? "Дата рождения: " + formatDate(pet.birthDate) : "Дата рождения не указана"}</p>
+                    </div>
+                    <span class="arrow">›</span>
+                </button>
+            `;
+        }
 
+        function renderDetail() {
+            const pet = getPet(selectedPetId);
+            const container = document.getElementById("pet_detail");
             if (!pet) {
-                container.innerHTML = "";
+                showHome();
                 return;
             }
 
             container.innerHTML = `
-                <section class="pet-profile">
-                    <div class="profile-header">
-                        <div class="profile-photo">
-                            <img src="${escapeHtml(pet.photo || getFallbackPhoto(pet.type))}" alt="${escapeHtml(pet.name)}">
-                        </div>
-                        <div class="info-stack">
-                            <div class="profile-title">
-                                <h2>${escapeHtml(pet.name)}</h2>
-                                <span class="pill">${formatType(pet.type)}</span>
-                            </div>
-                            <div>Порода: <strong>${escapeHtml(pet.breed)}</strong></div>
-                            <div style="margin-top:6px;">Здесь можно указать последнюю дату процедуры, препарат, интервал и напоминания.</div>
+                <div class="detail-title">
+                    <button class="back-btn" type="button" onclick="showHome()">‹</button>
+                    <h2>Карточка</h2>
+                    <button class="round-action" type="button" onclick="showPetForm('${pet.id}')">✎</button>
+                </div>
+
+                <section class="profile-hero">
+                    <div class="pet-photo">${renderPhoto(pet)}</div>
+                    <div>
+                        <h2>${escapeHtml(pet.name)}</h2>
+                        <div class="chips">
+                            <span class="chip">${formatType(pet.type)}</span>
+                            <span class="chip green">${escapeHtml(pet.breed)}</span>
+                            <span class="chip">${pet.birthDate ? formatDate(pet.birthDate) : "дата рождения не указана"}</span>
                         </div>
                     </div>
-                    <div class="care-list">
-                        ${CARE_TYPES.map((careItem) => renderCareBlock(pet, careItem)).join("")}
+                </section>
+
+                <nav class="tabs">
+                    ${CARE_TYPES.map((careType) => `
+                        <button
+                            class="tab-btn ${activeCareKey === careType.key ? "active" : ""}"
+                            type="button"
+                            onclick="setActiveCare('${careType.key}')"
+                        >
+                            ${careType.shortTitle}
+                        </button>
+                    `).join("")}
+                </nav>
+
+                ${renderActiveCare(pet)}
+
+                <div class="bottom-actions">
+                    <button class="secondary-btn" type="button" onclick="showHome()">К списку</button>
+                    <button class="primary-btn" type="button" onclick="sendData()">Отправить</button>
+                </div>
+            `;
+        }
+
+        function setActiveCare(careKey) {
+            activeCareKey = careKey;
+            renderDetail();
+        }
+
+        function renderActiveCare(pet) {
+            const careType = CARE_TYPES.find((item) => item.key === activeCareKey) || CARE_TYPES[0];
+            const care = pet.care[careType.key];
+            const nextDate = calculateNextDate(care.date, care.intervalDays);
+
+            return `
+                <section class="care-card">
+                    <div class="care-head">
+                        <div>
+                            <h3>${careType.title}</h3>
+                            <p class="meta-text">Заполните данные для этой вкладки.</p>
+                        </div>
+                        <div class="next-date">${nextDate || "нет даты"}</div>
                     </div>
-                    <div class="footer-actions">
-                        <button class="btn-primary" type="button" onclick="sendData()">Отправить всё в Telegram</button>
+
+                    <label for="${careType.key}_date">Дата вакцинации / обработки</label>
+                    <input
+                        id="${careType.key}_date"
+                        type="date"
+                        value="${escapeHtml(care.date)}"
+                        onchange="updateCareField('${pet.id}', '${careType.key}', 'date', this.value)"
+                    >
+
+                    <label for="${careType.key}_medicine">Препарат</label>
+                    <input
+                        id="${careType.key}_medicine"
+                        type="text"
+                        placeholder="Название препарата"
+                        value="${escapeHtml(care.medicine)}"
+                        oninput="updateCareField('${pet.id}', '${careType.key}', 'medicine', this.value, false)"
+                    >
+
+                    <label for="${careType.key}_interval">Интервал до следующей процедуры, дней</label>
+                    <input
+                        id="${careType.key}_interval"
+                        type="number"
+                        min="1"
+                        placeholder="Например, 365"
+                        value="${escapeHtml(care.intervalDays)}"
+                        onchange="updateCareField('${pet.id}', '${careType.key}', 'intervalDays', this.value)"
+                    >
+
+                    <label>Напоминания</label>
+                    <div class="reminders">
+                        ${DEFAULT_REMINDERS.map((day) => `
+                            <label class="reminder-option">
+                                <input
+                                    type="checkbox"
+                                    ${care.reminders.includes(day) ? "checked" : ""}
+                                    onchange="toggleReminder('${pet.id}', '${careType.key}', ${day}, this.checked)"
+                                >
+                                <span>за ${day} ${pluralizeDays(day)}</span>
+                            </label>
+                        `).join("")}
                     </div>
                 </section>
             `;
         }
 
-        function renderCareBlock(pet, careItem) {
-            const care = pet.care[careItem.key];
-            const nextDate = calculateNextDate(care.vaccinationDate, care.intervalDays);
-            const nextDateRaw = calculateNextDateRaw(care.vaccinationDate, care.intervalDays);
-            const isSoon = nextDateRaw && daysUntilDate(nextDateRaw) <= 7;
-
-            return `
-                <div class="care-item">
-                    <div class="care-head">
-                        <div>
-                            <h3>${careItem.title}</h3>
-                            <div class="section-subtitle">Дата процедуры, препарат и интервал до следующей</div>
-                        </div>
-                        <div class="status-date">
-                            <span class="pill ${isSoon ? "warning" : ""}">${nextDate ? (isSoon ? "Скоро" : "Запланировано") : "Нет даты"}</span>
-                            <strong>${nextDate || "---"}</strong>
-                        </div>
-                    </div>
-
-                    <div class="grid-2">
-                        <div>
-                            <label for="${careItem.key}_date">Дата вакцинации / обработки</label>
-                            <input
-                                type="date"
-                                id="${careItem.key}_date"
-                                value="${escapeHtml(care.vaccinationDate)}"
-                                onchange="updateCareField('${pet.id}', '${careItem.key}', 'vaccinationDate', this.value)"
-                            >
-                        </div>
-                        <div>
-                            <label for="${careItem.key}_interval">Интервал до следующей (дней)</label>
-                            <input
-                                type="number"
-                                id="${careItem.key}_interval"
-                                min="1"
-                                placeholder="Например, 365"
-                                value="${escapeHtml(care.intervalDays)}"
-                                oninput="updateCareField('${pet.id}', '${careItem.key}', 'intervalDays', this.value)"
-                            >
-                        </div>
-                    </div>
-
-                    <label for="${careItem.key}_medicine">Препарат</label>
-                    <input
-                        type="text"
-                        id="${careItem.key}_medicine"
-                        placeholder="Введите название препарата"
-                        value="${escapeHtml(care.medicine)}"
-                        oninput="updateCareField('${pet.id}', '${careItem.key}', 'medicine', this.value, false)"
-                    >
-
-                    <label>Напоминание до следующей даты</label>
-                    <div class="reminder-group">
-                        ${[30, 7, 1].map((day) => `
-                            <label class="reminder-option">
-                                <input
-                                    type="checkbox"
-                                    ${care.reminders.includes(day) ? "checked" : ""}
-                                    onchange="toggleReminder('${pet.id}', '${careItem.key}', ${day}, this.checked)"
-                                >
-                                <span>За ${day} ${pluralizeDays(day)}</span>
-                            </label>
-                        `).join("")}
-                    </div>
-                    <div class="reminder-note">Следующая дата рассчитывается автоматически на основе последней процедуры и выбранного интервала.</div>
-                </div>
-            `;
-        }
-
         function updateCareField(petId, careKey, field, value, shouldRerender = true) {
-            const pet = appState.pets.find((item) => item.id === petId);
+            const pet = getPet(petId);
             if (!pet) return;
-
             pet.care[careKey][field] = value;
             saveState();
+
             if (shouldRerender) {
-                renderPetsList();
-                renderPetProfile();
+                renderDetail();
             }
         }
 
         function toggleReminder(petId, careKey, day, checked) {
-            const pet = appState.pets.find((item) => item.id === petId);
+            const pet = getPet(petId);
             if (!pet) return;
 
             const reminders = new Set((pet.care[careKey].reminders || []).map(Number));
@@ -876,59 +1024,41 @@
             } else {
                 reminders.delete(day);
             }
-
             pet.care[careKey].reminders = Array.from(reminders).sort((a, b) => b - a);
             saveState();
         }
 
-        function calculateNextDate(lastDate, intervalDays) {
-            const nextDate = calculateNextDateRaw(lastDate, intervalDays);
-            if (!nextDate) return "";
-
-            return nextDate.toLocaleDateString("ru-RU", {
-                day: "numeric",
-                month: "long",
-                year: "numeric"
-            });
+        function renderPhoto(pet) {
+            if (!pet.photo) return "PET";
+            return `<img src="${escapeHtml(pet.photo)}" alt="${escapeHtml(pet.name)}">`;
         }
 
-        function calculateNextDateRaw(lastDate, intervalDays) {
-            if (!lastDate || !intervalDays) return "";
-            const parsedInterval = Number(intervalDays);
-            if (!parsedInterval) return "";
+        function formatType(type) {
+            return type === "cat" ? "кошка" : "собака";
+        }
 
-            const date = new Date(lastDate);
+        function formatDate(dateValue) {
+            if (!dateValue) return "";
+            const date = new Date(dateValue);
             if (Number.isNaN(date.getTime())) return "";
-
-            date.setDate(date.getDate() + parsedInterval);
-            return date;
-        }
-
-        function getNearestNextDate(pet) {
-            const dates = CARE_TYPES
-                .map((item) => pet.care[item.key])
-                .map((care) => {
-                    if (!care.vaccinationDate || !care.intervalDays) return null;
-                    const date = new Date(care.vaccinationDate);
-                    date.setDate(date.getDate() + Number(care.intervalDays || 0));
-                    return Number.isNaN(date.getTime()) ? null : date;
-                })
-                .filter(Boolean)
-                .sort((a, b) => a - b);
-
-            if (!dates.length) return "";
-
-            return dates[0].toLocaleDateString("ru-RU", {
+            return date.toLocaleDateString("ru-RU", {
                 day: "numeric",
                 month: "long",
                 year: "numeric"
             });
         }
 
-        function daysUntilDate(date) {
-            const target = new Date(date);
-            const diff = target.setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0);
-            return Math.ceil(diff / 86400000);
+        function calculateNextDate(lastDate, intervalDays) {
+            if (!lastDate || !intervalDays) return "";
+            const date = new Date(lastDate);
+            const interval = Number(intervalDays);
+            if (Number.isNaN(date.getTime()) || !interval) return "";
+            date.setDate(date.getDate() + interval);
+            return date.toLocaleDateString("ru-RU", {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+            });
         }
 
         function pluralizeDays(value) {
@@ -955,16 +1085,17 @@
                     name: pet.name,
                     type: formatType(pet.type),
                     breed: pet.breed,
+                    birthDate: pet.birthDate,
                     photo: pet.photo,
-                    care: CARE_TYPES.map((careItem) => {
-                        const care = pet.care[careItem.key];
+                    care: CARE_TYPES.map((careType) => {
+                        const care = pet.care[careType.key];
                         return {
-                            title: careItem.title,
-                            vaccinationDate: care.vaccinationDate,
+                            title: careType.title,
+                            date: care.date,
                             medicine: care.medicine,
                             intervalDays: care.intervalDays,
-                            nextDate: calculateNextDate(care.vaccinationDate, care.intervalDays),
-                            reminders: (care.reminders || []).sort((a, b) => b - a)
+                            nextDate: calculateNextDate(care.date, care.intervalDays),
+                            reminders: care.reminders
                         };
                     })
                 }))
@@ -972,7 +1103,7 @@
 
             if (tg?.sendData) {
                 tg.sendData(JSON.stringify(payload));
-                showAlert("Данные по питомцам отправлены в Telegram.");
+                showAlert("Данные отправлены в Telegram.");
                 return;
             }
 
@@ -988,16 +1119,14 @@
             window.alert(message);
         }
 
-        function render() {
-            if (!selectedPetId && appState.pets[0]) {
-                selectedPetId = appState.pets[0].id;
-            }
-            renderPetsList();
-            renderPetProfile();
-        }
+        document.getElementById("pet_photo").addEventListener("input", (event) => {
+            uploadedPhotoData = "";
+            document.getElementById("pet_photo_file").value = "";
+            updatePhotoPreview(event.target.value.trim());
+        });
 
         populateBreeds();
-        render();
+        renderHome();
     </script>
 </body>
 </html>
