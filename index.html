@@ -103,6 +103,17 @@
             font-weight: 800;
         }
 
+        .detail-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .danger-action {
+            background: var(--hot-orange);
+            color: var(--light-beige);
+        }
+
         .screen {
             display: none;
             padding: 22px 26px 26px;
@@ -1207,6 +1218,20 @@
             showDetail(selectedPetId);
         }
 
+        function deletePet(petId) {
+            const pet = getPet(petId);
+            if (!pet) return;
+
+            const confirmed = window.confirm(`Удалить питомца ${pet.name}? Это действие нельзя отменить.`);
+            if (!confirmed) return;
+
+            appState.pets = appState.pets.filter((item) => item.id !== petId);
+            selectedPetId = appState.pets[0]?.id || "";
+            editingPetId = "";
+            saveState();
+            showHome();
+        }
+
         function renderHome() {
             const list = document.getElementById("pets_list");
 
@@ -1258,7 +1283,10 @@
                 <div class="detail-title">
                     <button class="back-btn" type="button" onclick="showHome()">‹</button>
                     <h2>Карточка</h2>
-                    <button class="round-action" type="button" onclick="showPetForm('${pet.id}')">✎</button>
+                    <div class="detail-actions">
+                        <button class="round-action danger-action" type="button" onclick="deletePet('${pet.id}')">×</button>
+                        <button class="round-action" type="button" onclick="showPetForm('${pet.id}')">✎</button>
+                    </div>
                 </div>
 
                 <section class="profile-hero">
