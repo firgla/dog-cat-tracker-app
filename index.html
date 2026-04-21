@@ -489,9 +489,15 @@
         .care-fields input,
         .care-fields textarea {
             display: block;
-            width: 100%;
-            max-width: 100%;
+            width: calc(100% - 32px);
+            max-width: calc(100% - 32px);
             min-width: 0;
+            justify-self: start;
+        }
+
+        .care-fields input[type="date"] {
+            appearance: none;
+            -webkit-appearance: none;
         }
 
         .next-date {
