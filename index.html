@@ -92,9 +92,10 @@
         .round-action {
             display: grid;
             place-items: center;
+            width: 48px;
             min-width: 48px;
             height: 48px;
-            padding: 0 16px;
+            padding: 0;
             border-radius: 18px;
             background: var(--pastel-purple);
             font-size: 22px;
@@ -161,6 +162,10 @@
             overflow: hidden;
             background: var(--pastel-purple);
             color: var(--dark-purple);
+            text-align: center;
+            line-height: 1.08;
+            padding: 10px;
+            overflow-wrap: anywhere;
         }
 
         .pet-photo {
@@ -205,6 +210,8 @@
             color: var(--hot-orange);
             font-size: 30px;
             font-weight: 800;
+            line-height: 1;
+            padding-bottom: 3px;
         }
 
         .add-card {
@@ -291,6 +298,7 @@
         input,
         select {
             width: 100%;
+            height: 58px;
             border: 2px solid var(--pastel-purple);
             border-radius: 18px;
             padding: 15px 16px;
@@ -301,6 +309,8 @@
         }
 
         input[type="file"] {
+            height: auto;
+            min-height: 58px;
             padding: 12px;
         }
 
@@ -451,11 +461,11 @@
             display: flex;
             justify-content: space-between;
             gap: 12px;
-            margin-bottom: 14px;
+            margin-bottom: 20px;
         }
 
         .care-head h3 {
-            margin: 0;
+            margin: 0 0 8px;
             font-size: 24px;
             line-height: 1.05;
         }
@@ -586,7 +596,6 @@
                     <p>Трекер для питомцев</p>
                 </div>
             </div>
-            <button class="round-action" type="button" onclick="showPetForm()">+</button>
         </header>
 
         <section id="home_screen" class="screen active">
@@ -601,7 +610,7 @@
                 </div>
 
                 <label for="pet_name">Имя</label>
-                <input id="pet_name" type="text" placeholder="Например, Нора">
+                <input id="pet_name" type="text" placeholder="Например, Нора" oninput="refreshNamePreview()">
 
                 <div class="field-grid">
                     <div>
@@ -622,7 +631,7 @@
 
                 <div class="photo-field">
                     <label for="pet_photo_file">Фотография</label>
-                    <div id="photo_preview" class="photo-preview">PET</div>
+                    <div id="photo_preview" class="photo-preview"></div>
                     <input id="pet_photo_file" type="file" accept="image/*" onchange="handlePhotoUpload(event)">
                 </div>
                 <p class="hint">Если фото не выбрать, карточка останется с мягкой цветной заглушкой.</p>
@@ -1052,7 +1061,13 @@
                 preview.innerHTML = `<img src="${escapeHtml(photo)}" alt="Фото питомца">`;
                 return;
             }
-            preview.innerHTML = "PET";
+            preview.innerHTML = escapeHtml(document.getElementById("pet_name").value.trim() || "Имя");
+        }
+
+        function refreshNamePreview() {
+            if (!uploadedPhotoData) {
+                updatePhotoPreview("");
+            }
         }
 
         function savePet() {
@@ -1188,7 +1203,7 @@
                     <div class="care-head">
                         <div>
                             <h3>${careType.title}</h3>
-                            <p class="meta-text">Заполните данные для этой вкладки.</p>
+                            <p class="meta-text">Заполните данные.</p>
                         </div>
                         <div class="next-date">${nextDate || "Нет даты"}</div>
                     </div>
@@ -1263,7 +1278,7 @@
         }
 
         function renderPhoto(pet) {
-            if (!pet.photo) return "PET";
+            if (!pet.photo) return escapeHtml(pet.name || "Имя");
             return `<img src="${escapeHtml(pet.photo)}" alt="${escapeHtml(pet.name)}">`;
         }
 
