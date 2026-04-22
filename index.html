@@ -569,6 +569,63 @@
             -webkit-appearance: none;
         }
 
+        .inline-care-action {
+            margin-top: 18px;
+        }
+
+        .history-section {
+            margin-top: 22px;
+        }
+
+        .history-title {
+            margin: 0 0 10px;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .history-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .history-card {
+            display: grid;
+            gap: 8px;
+            padding: 14px;
+            border: 2px solid var(--pastel-purple);
+            border-radius: 18px;
+            background: var(--light-beige);
+        }
+
+        .history-card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .history-card strong {
+            font-size: 16px;
+        }
+
+        .history-card p {
+            margin: 0;
+            line-height: 1.35;
+        }
+
+        .history-delete {
+            display: grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            background: var(--hot-orange);
+            color: var(--light-beige);
+            font-size: 22px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
         .next-date {
             min-width: 130px;
             padding: 11px 14px;
@@ -1042,11 +1099,11 @@
             CARE_TYPES.forEach((item) => {
                 care[item.key] = {
                     date: "",
-                    reminderInterval: "",
                     medicine: "",
                     intervalDays: "",
                     note: "",
-                    reminders: [...DEFAULT_REMINDERS]
+                    reminders: [...DEFAULT_REMINDERS],
+                    history: []
                 };
             });
 
@@ -1077,19 +1134,54 @@
 
             CARE_TYPES.forEach((item) => {
                 const oldCare = pet.care?.[item.key] || {};
+                const hasSavedHistory = Array.isArray(oldCare.history) && oldCare.history.length;
+                const movedCurrentToHistory = !hasSavedHistory && (oldCare.date || oldCare.vaccinationDate);
+                const history = normalizeCareHistory(oldCare);
                 normalized.care[item.key] = {
-                    date: oldCare.date || oldCare.vaccinationDate || "",
-                    reminderInterval: oldCare.reminderInterval || "",
-                    medicine: oldCare.medicine || "",
+                    date: movedCurrentToHistory ? "" : oldCare.date || oldCare.vaccinationDate || "",
+                    medicine: movedCurrentToHistory ? "" : oldCare.medicine || "",
                     intervalDays: oldCare.intervalDays || "",
-                    note: oldCare.note || "",
+                    note: movedCurrentToHistory ? "" : oldCare.note || "",
                     reminders: Array.isArray(oldCare.reminders) && oldCare.reminders.length
                         ? oldCare.reminders.map(Number)
-                        : [...DEFAULT_REMINDERS]
+                        : [...DEFAULT_REMINDERS],
+                    history
                 };
             });
 
             return normalized;
+        }
+
+        function normalizeCareHistory(care) {
+            const existingHistory = Array.isArray(care.history) ? care.history : [];
+            const migratedCurrentRecord = !existingHistory.length && (care.date || care.vaccinationDate)
+                ? [{
+                    id: createId(),
+                    date: care.date || care.vaccinationDate || "",
+                    medicine: care.medicine || "",
+                    intervalDays: care.intervalDays || "",
+                    note: care.note || "",
+                    reminders: Array.isArray(care.reminders) && care.reminders.length
+                        ? care.reminders.map(Number)
+                        : [...DEFAULT_REMINDERS],
+                    createdAt: new Date().toISOString()
+                }]
+                : [];
+
+            return [...existingHistory, ...migratedCurrentRecord]
+                .map((record) => ({
+                    id: record.id || createId(),
+                    date: record.date || "",
+                    medicine: record.medicine || "",
+                    intervalDays: record.intervalDays || "",
+                    note: record.note || "",
+                    reminders: Array.isArray(record.reminders) && record.reminders.length
+                        ? record.reminders.map(Number)
+                        : [...DEFAULT_REMINDERS],
+                    createdAt: record.createdAt || new Date().toISOString()
+                }))
+                .filter((record) => record.date || record.medicine || record.note)
+                .sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
         }
 
         function setScreen(screen) {
@@ -1346,7 +1438,11 @@
         function renderActiveCare(pet) {
             const careType = CARE_TYPES.find((item) => item.key === activeCareKey) || CARE_TYPES[0];
             const care = pet.care[careType.key];
-            const nextDate = calculateNextDate(care.date, care.intervalDays);
+            const latestRecord = getLatestCareRecord(care);
+            const nextDate = calculateNextDate(
+                care.date || latestRecord?.date,
+                care.intervalDays || latestRecord?.intervalDays
+            );
 
             return `
                 <section class="care-card">
@@ -1366,22 +1462,6 @@
                             value="${escapeHtml(care.date)}"
                             onchange="updateCareField('${pet.id}', '${careType.key}', 'date', this.value)"
                         >
-
-                        <label for="${careType.key}_reminder_interval">Препарат / интервал напоминаний</label>
-                        <input
-                            id="${careType.key}_reminder_interval"
-                            type="text"
-                            placeholder="Например, схема или особые сроки"
-                            value="${escapeHtml(care.reminderInterval)}"
-                            oninput="updateCareField('${pet.id}', '${careType.key}', 'reminderInterval', this.value, false)"
-                        >
-
-                        <label for="${careType.key}_note">Заметка</label>
-                        <textarea
-                            id="${careType.key}_note"
-                            placeholder="Например, реакция, рекомендации врача или важные детали"
-                            oninput="updateCareField('${pet.id}', '${careType.key}', 'note', this.value, false)"
-                        >${escapeHtml(care.note)}</textarea>
 
                         <label for="${careType.key}_medicine">Препарат</label>
                         <input
@@ -1415,8 +1495,110 @@
                                 </label>
                             `).join("")}
                         </div>
+
+                        <label for="${careType.key}_note">Заметка</label>
+                        <textarea
+                            id="${careType.key}_note"
+                            placeholder="Например, реакция, рекомендации врача или важные детали"
+                            oninput="updateCareField('${pet.id}', '${careType.key}', 'note', this.value, false)"
+                        >${escapeHtml(care.note)}</textarea>
+
+                        <button class="primary-btn inline-care-action" type="button" onclick="addCareHistoryEntry('${pet.id}', '${careType.key}')">
+                            Добавить запись в историю
+                        </button>
                     </div>
+
+                    ${renderCareHistory(pet, careType)}
                 </section>
+            `;
+        }
+
+        function getLatestCareRecord(care) {
+            const history = Array.isArray(care.history) ? care.history : [];
+            return [...history]
+                .filter((record) => record.date || record.medicine || record.note)
+                .sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt))[0];
+        }
+
+        function addCareHistoryEntry(petId, careKey) {
+            const pet = getPet(petId);
+            if (!pet) return;
+
+            const care = pet.care[careKey];
+            if (!care.date) {
+                showAlert("Укажите дату записи.");
+                return;
+            }
+
+            const record = {
+                id: createId(),
+                date: care.date,
+                medicine: care.medicine || "",
+                intervalDays: care.intervalDays || "",
+                note: care.note || "",
+                reminders: [...(care.reminders || DEFAULT_REMINDERS)],
+                createdAt: new Date().toISOString()
+            };
+
+            care.history = [record, ...(care.history || [])]
+                .sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+            care.date = "";
+            care.medicine = "";
+            care.note = "";
+            saveState();
+            renderDetail();
+        }
+
+        function deleteCareHistoryEntry(petId, careKey, recordId) {
+            const pet = getPet(petId);
+            if (!pet) return;
+
+            const confirmed = window.confirm("Удалить эту запись из истории?");
+            if (!confirmed) return;
+
+            const care = pet.care[careKey];
+            care.history = (care.history || []).filter((record) => record.id !== recordId);
+            saveState();
+            renderDetail();
+        }
+
+        function renderCareHistory(pet, careType) {
+            const care = pet.care[careType.key];
+            const history = Array.isArray(care.history) ? care.history : [];
+
+            if (!history.length) {
+                return `
+                    <div class="history-section">
+                        <h4 class="history-title">История</h4>
+                        <p class="meta-text">Пока записей нет. Добавьте первую запись выше.</p>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="history-section">
+                    <h4 class="history-title">История</h4>
+                    <div class="history-list">
+                        ${history.map((record) => `
+                            <article class="history-card">
+                                <div class="history-card-head">
+                                    <strong>${record.date ? formatDate(record.date) : "Без даты"}</strong>
+                                    <button
+                                        class="history-delete"
+                                        type="button"
+                                        onclick="deleteCareHistoryEntry('${pet.id}', '${careType.key}', '${record.id}')"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                                ${record.medicine ? `<p><strong>Препарат:</strong> ${escapeHtml(record.medicine)}</p>` : ""}
+                                ${record.intervalDays ? `<p><strong>Интервал:</strong> ${escapeHtml(record.intervalDays)} ${pluralizeDays(Number(record.intervalDays))}</p>` : ""}
+                                ${record.note ? `<p><strong>Заметка:</strong> ${escapeHtml(record.note)}</p>` : ""}
+                                ${record.reminders?.length ? `<p><strong>Напоминания:</strong> ${record.reminders.map((day) => `за ${day} ${pluralizeDays(day)}`).join(", ")}</p>` : ""}
+                            </article>
+                        `).join("")}
+                    </div>
+                </div>
             `;
         }
 
@@ -1507,15 +1689,19 @@
                     photo: pet.photo,
                     care: CARE_TYPES.map((careType) => {
                         const care = pet.care[careType.key];
+                        const latestRecord = getLatestCareRecord(care);
                         return {
                             title: careType.title,
                             date: care.date,
-                            reminderInterval: care.reminderInterval,
                             note: care.note,
                             medicine: care.medicine,
                             intervalDays: care.intervalDays,
-                            nextDate: calculateNextDate(care.date, care.intervalDays),
-                            reminders: care.reminders
+                            nextDate: calculateNextDate(
+                                care.date || latestRecord?.date,
+                                care.intervalDays || latestRecord?.intervalDays
+                            ),
+                            reminders: care.reminders,
+                            history: care.history || []
                         };
                     })
                 }))
