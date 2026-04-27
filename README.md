@@ -38,6 +38,29 @@ Telegram Web App для учета питомцев, истории процед
 - `SESSION_TTL_DAYS` — срок жизни cookie-сессии
 - `DEV_TELEGRAM_USER_JSON` — dev fallback для локального запуска вне Telegram
 
+Для Preview/Production на Vercel эти же переменные нужно добавить в настройках проекта или подтянуть локально через `vercel env pull`.
+
+## Деплой в Vercel
+
+Если `vercel build` или `vercel deploy` падает с ошибкой `project_settings_required`, это значит, что локальная папка еще не связана с проектом Vercel и отсутствует `.vercel/project.json`.
+
+Минимальная последовательность:
+
+```bash
+vercel link
+vercel pull --environment=preview
+vercel env pull .env.local
+vercel build
+vercel deploy
+```
+
+Что проверить перед деплоем:
+
+- Репозиторий импортирован в Vercel как отдельный проект.
+- В проекте Vercel заведены `DATABASE_URL`, `TELEGRAM_BOT_TOKEN`, `APP_URL`, `CRON_SECRET`, `BLOB_READ_WRITE_TOKEN`.
+- `APP_URL` указывает на фактический домен деплоя Vercel.
+- Cron из [vercel.json](/Users/glafira.fironova/Documents/dog-cat-tracker-app/vercel.json) требует валидный `CRON_SECRET` для ручных вызовов эндпоинта.
+
 ## Локальный запуск
 
 ```bash
@@ -53,6 +76,7 @@ npm run dev
 npm run lint
 npx tsc --noEmit
 npm run build
+vercel build
 ```
 
 ## База данных
