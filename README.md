@@ -8,7 +8,7 @@ Telegram Web App для учета питомцев, истории процед
 - backend API на route handlers
 - Telegram auth через `initData`
 - webhook Telegram-бота с `/start` и кнопкой открытия Web App
-- hourly cron endpoint для рассылки напоминаний
+- daily cron endpoint для рассылки напоминаний на Vercel Hobby
 - PostgreSQL схема на `Drizzle ORM`
 - загрузка фотографий в `Vercel Blob`
 
@@ -64,4 +64,5 @@ npm run build
 ## Примечания
 
 - Для локальной разработки без Telegram auth endpoint использует `DEV_TELEGRAM_USER_JSON`, если приложение запущено не в production и `initData` отсутствует.
+- На Vercel Hobby cron ограничен запуском один раз в день, поэтому напоминания отправляются daily batch по локальной дате пользователя, а не в точный локальный час.
 - Исходный HTML-прототип сохранен в [docs/legacy-prototype.html](/Users/ivan/PycharmProjects/dog-cat-tracker-app/docs/legacy-prototype.html).

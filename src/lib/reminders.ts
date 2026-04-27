@@ -31,11 +31,6 @@ function getLocalTimeParts(timezone: string) {
   };
 }
 
-function shouldSendInThisHour(notificationTimeLocal: string, timezone: string) {
-  const [targetHour] = notificationTimeLocal.split(":").map(Number);
-  return getLocalTimeParts(timezone).hour === targetHour;
-}
-
 function buildReminderText(petName: string, careType: string, offsetDays: number, dueDate: string) {
   const when = offsetDays === 1 ? "завтра" : `через ${offsetDays} дн.`;
   return `Напоминание NoraCare: ${when} у ${petName} запланирована процедура "${careType}". Следующая дата: ${formatDate(dueDate)}.`;
@@ -66,10 +61,12 @@ export async function runReminderCron() {
   for (const user of availableUsers) {
     stats.scannedUsers += 1;
 
-    if (!user.notificationTimeLocal || !user.timezone || !shouldSendInThisHour(user.notificationTimeLocal, user.timezone)) {
+    if (!user.notificationTimeLocal || !user.timezone) {
       continue;
     }
 
+    // On Vercel Hobby cron jobs can run only once per day, so we send a daily
+    // reminder batch based on the user's local date instead of their exact hour.
     const localParts = getLocalTimeParts(user.timezone);
     const dueProfiles = await db
       .select({
