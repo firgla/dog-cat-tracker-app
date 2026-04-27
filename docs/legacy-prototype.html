@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NoraCare</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --pastel-purple: #C4C3E3;
+            --dark-purple: #504E76;
+            --light-beige: #FDF8E2;
+            --calm-green: #A3B565;
+            --light-orange: #FCDD9D;
+            --hot-orange: #F1642E;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--dark-purple);
+            background: var(--light-beige);
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            border: 0;
+            cursor: pointer;
+            color: var(--dark-purple);
+        }
+
+        .app {
+            min-height: 100vh;
+            max-width: 640px;
+            margin: 0 auto;
+            background: var(--light-beige);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 20px 26px 22px;
+            background: var(--light-beige);
+            border-bottom: 2px solid var(--pastel-purple);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo {
+            display: grid;
+            place-items: center;
+            width: 54px;
+            height: 54px;
+            border-radius: 18px;
+            background: var(--light-orange);
+            color: var(--hot-orange);
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 28px;
+            line-height: 1;
+            letter-spacing: -0.03em;
+        }
+
+        .brand p {
+            margin: 6px 0 0;
+            color: var(--calm-green);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .round-action {
+            display: grid;
+            place-items: center;
+            width: 48px;
+            min-width: 48px;
+            height: 48px;
+            padding: 0;
+            border-radius: 18px;
+            background: var(--pastel-purple);
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .detail-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .danger-action {
+            background: var(--hot-orange);
+            color: var(--light-beige);
+        }
+
+        .screen {
+            display: none;
+            padding: 22px 26px 26px;
+        }
+
+        .screen.active {
+            display: block;
+            animation: rise 0.22s ease;
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pet-list {
+            display: grid;
+            gap: 18px;
+        }
+
+        .pet-card,
+        .add-card,
+        .form-card,
+        .care-card {
+            border-radius: 26px;
+            background: var(--light-beige);
+            border: 2px solid var(--pastel-purple);
+        }
+
+        .pet-card {
+            display: grid;
+            grid-template-columns: 150px 1fr 54px;
+            gap: 22px;
+            align-items: center;
+            width: 100%;
+            padding: 24px;
+            text-align: left;
+        }
+
+        .pet-card:hover,
+        .add-card:hover,
+        .primary-btn:hover,
+        .secondary-btn:hover,
+        .tab-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .pet-photo,
+        .photo-preview {
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            background: var(--pastel-purple);
+            color: var(--dark-purple);
+            text-align: center;
+            line-height: 1.08;
+            padding: 10px;
+            overflow-wrap: anywhere;
+        }
+
+        .pet-photo {
+            width: 150px;
+            height: 150px;
+            border-radius: 24px;
+            font-size: 22px;
+            font-weight: 900;
+        }
+
+        .pet-photo img,
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .pet-card h2 {
+            margin: 0 0 8px;
+            font-size: 30px;
+            letter-spacing: -0.03em;
+        }
+
+        .pet-card p,
+        .empty-note,
+        .hint,
+        .meta-text {
+            margin: 0;
+            color: var(--dark-purple);
+            opacity: 0.82;
+            line-height: 1.45;
+        }
+
+        .arrow {
+            display: grid;
+            place-items: center;
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: var(--pastel-purple);
+            color: var(--hot-orange);
+            font-size: 30px;
+            font-weight: 800;
+            line-height: 1;
+            padding-bottom: 3px;
+        }
+
+        .add-card {
+            width: 100%;
+            padding: 36px 20px;
+            border-style: dashed;
+            background: var(--light-beige);
+            color: var(--dark-purple);
+        }
+
+        .add-card strong {
+            display: block;
+            margin-top: 12px;
+            font-size: 26px;
+            font-weight: 500;
+        }
+
+        .add-icon {
+            display: grid;
+            place-items: center;
+            width: 58px;
+            height: 58px;
+            margin: 0 auto;
+            border-radius: 20px;
+            background: var(--light-orange);
+            color: var(--hot-orange);
+            font-size: 36px;
+            font-weight: 300;
+        }
+
+        .empty-state {
+            display: grid;
+            gap: 18px;
+            min-height: 54vh;
+            align-content: center;
+        }
+
+        .empty-note {
+            padding: 18px 20px;
+            border-radius: 22px;
+            background: var(--pastel-purple);
+            font-weight: 700;
+        }
+
+        .form-card,
+        .care-card {
+            padding: 22px;
+        }
+
+        .form-title,
+        .detail-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .form-title h2,
+        .detail-title h2 {
+            margin: 0;
+            font-size: 30px;
+            letter-spacing: -0.03em;
+        }
+
+        .back-btn {
+            display: grid;
+            place-items: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 17px;
+            background: var(--pastel-purple);
+            font-size: 28px;
+        }
+
+        label {
+            display: block;
+            margin: 18px 0 8px;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark-purple);
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            height: 58px;
+            border: 2px solid var(--pastel-purple);
+            border-radius: 18px;
+            padding: 15px 16px;
+            color: var(--dark-purple);
+            background: var(--light-beige);
+            outline: none;
+            text-align: left;
+        }
+
+        textarea {
+            min-height: 92px;
+            height: 92px;
+            resize: vertical;
+        }
+
+        input[type="file"] {
+            height: auto;
+            min-height: 58px;
+            padding: 12px;
+        }
+
+        .form-card input[type="date"] {
+            appearance: none;
+            -webkit-appearance: none;
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+        }
+
+        input[type="file"]::file-selector-button {
+            margin-right: 12px;
+            border: 0;
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: var(--light-orange);
+            color: var(--dark-purple);
+            font-weight: 800;
+        }
+
+        input[type="file"]::-webkit-file-upload-button {
+            margin-right: 12px;
+            border: 0;
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: var(--light-orange);
+            color: var(--dark-purple);
+            font-weight: 800;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--hot-orange);
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .photo-field {
+            display: grid;
+            justify-items: center;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .photo-preview {
+            width: 132px;
+            height: 132px;
+            border-radius: 28px;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .photo-field label {
+            width: 100%;
+            margin: 0;
+        }
+
+        .hint {
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .primary-btn,
+        .secondary-btn {
+            width: 100%;
+            min-height: 58px;
+            border-radius: 20px;
+            margin-top: 22px;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .primary-btn {
+            background: var(--hot-orange);
+            color: var(--light-beige);
+        }
+
+        .secondary-btn {
+            background: var(--calm-green);
+            color: var(--light-beige);
+        }
+
+        .profile-hero {
+            display: grid;
+            grid-template-columns: 118px 1fr;
+            gap: 18px;
+            align-items: center;
+            margin-bottom: 18px;
+            padding: 18px;
+            border-radius: 26px;
+            background: var(--pastel-purple);
+        }
+
+        .profile-hero .pet-photo {
+            width: 118px;
+            height: 118px;
+        }
+
+        .profile-hero h2 {
+            margin: 0 0 8px;
+            font-size: 30px;
+        }
+
+        .important-info {
+            margin-bottom: 18px;
+            border: 2px solid var(--pastel-purple);
+            border-radius: 22px;
+            background: var(--light-beige);
+            overflow: hidden;
+        }
+
+        .important-info summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 58px;
+            padding: 15px 18px;
+            color: var(--dark-purple);
+            cursor: pointer;
+            font-weight: 900;
+            list-style: none;
+        }
+
+        .important-info summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .important-info summary::after {
+            content: "+";
+            display: grid;
+            place-items: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 12px;
+            background: var(--light-orange);
+            color: var(--hot-orange);
+            flex-shrink: 0;
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .important-info[open] summary::after {
+            content: "-";
+        }
+
+        .important-info-content {
+            padding: 0 18px 18px;
+            white-space: pre-wrap;
+            line-height: 1.45;
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--light-orange);
+            color: var(--dark-purple);
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .chip.green {
+            background: var(--calm-green);
+            color: var(--light-beige);
+        }
+
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 18px 0;
+        }
+
+        .tab-btn {
+            min-height: 58px;
+            border-radius: 18px;
+            padding: 9px;
+            background: var(--light-orange);
+            color: var(--dark-purple);
+            font-size: 14px;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+
+        .tab-btn.active {
+            background: var(--dark-purple);
+            color: var(--light-beige);
+        }
+
+        .care-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .care-head h3 {
+            margin: 0 0 8px;
+            font-size: 24px;
+            line-height: 1.05;
+        }
+
+        .care-fields {
+            display: grid;
+            gap: 0;
+            width: 100%;
+            justify-items: stretch;
+        }
+
+        .care-fields input,
+        .care-fields textarea {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            justify-self: start;
+        }
+
+        .care-fields input[type="date"] {
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .inline-care-action {
+            margin-top: 18px;
+        }
+
+        .history-section {
+            margin-top: 22px;
+        }
+
+        .history-title {
+            margin: 0 0 10px;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .history-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .history-card {
+            display: grid;
+            gap: 8px;
+            padding: 14px;
+            border: 2px solid var(--pastel-purple);
+            border-radius: 18px;
+            background: var(--light-beige);
+        }
+
+        .history-card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .history-card strong {
+            font-size: 16px;
+        }
+
+        .history-card p {
+            margin: 0;
+            line-height: 1.35;
+        }
+
+        .history-delete {
+            display: grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            background: var(--hot-orange);
+            color: var(--light-beige);
+            font-size: 22px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .next-date {
+            min-width: 130px;
+            padding: 11px 14px;
+            border-radius: 18px;
+            background: var(--calm-green);
+            color: var(--light-beige);
+            text-align: center;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .reminders-title {
+            margin-bottom: 2px;
+        }
+
+        .reminders {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 0;
+        }
+
+        .reminder-option {
+            display: block;
+            margin: 0;
+            position: relative;
+        }
+
+        .reminder-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .reminder-option span {
+            display: grid;
+            place-items: center;
+            min-height: 44px;
+            border: 2px solid var(--pastel-purple);
+            border-radius: 16px;
+            color: var(--dark-purple);
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .reminder-option input:checked + span {
+            background: var(--hot-orange);
+            border-color: var(--hot-orange);
+            color: var(--light-beige);
+        }
+
+        .bottom-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 560px) {
+            .header,
+            .screen {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+
+            .header {
+                padding-top: 16px;
+                padding-bottom: 18px;
+            }
+
+            .pet-card {
+                grid-template-columns: 116px 1fr 44px;
+                gap: 14px;
+                padding: 18px;
+            }
+
+            .pet-photo {
+                width: 116px;
+                height: 116px;
+            }
+
+            .pet-card h2,
+            .brand h1,
+            .form-title h2,
+            .detail-title h2 {
+                font-size: 25px;
+            }
+
+            .arrow {
+                width: 44px;
+                height: 44px;
+            }
+
+            .field-grid,
+            .profile-hero,
+            .bottom-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .field-grid {
+                gap: 0;
+            }
+
+            .tabs {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .care-head {
+                display: grid;
+            }
+
+            .next-date {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="app">
+        <header class="header">
+            <div class="brand">
+                <div class="logo">NC</div>
+                <div>
+                    <h1>NoraCare</h1>
+                    <p>Трекер для питомцев</p>
+                </div>
+            </div>
+        </header>
+
+        <section id="home_screen" class="screen active">
+            <div id="pets_list" class="pet-list"></div>
+        </section>
+
+        <section id="form_screen" class="screen">
+            <div class="form-card">
+                <div class="form-title">
+                    <button class="back-btn" type="button" onclick="showHome()">‹</button>
+                    <h2 id="form_title">Добавить питомца</h2>
+                </div>
+
+                <label for="pet_name">Имя</label>
+                <input id="pet_name" type="text" placeholder="Например, Нора" oninput="refreshNamePreview()">
+
+                <div class="field-grid">
+                    <div>
+                        <label for="pet_type">Тип животного</label>
+                        <select id="pet_type" onchange="populateBreeds()">
+                            <option value="dog">Собака</option>
+                            <option value="cat">Кошка</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="pet_breed">Порода</label>
+                        <select id="pet_breed"></select>
+                    </div>
+                </div>
+
+                <label for="pet_birth_date">Дата рождения</label>
+                <input id="pet_birth_date" type="date">
+
+                <label for="pet_important_info">Важная информация</label>
+                <textarea
+                    id="pet_important_info"
+                    placeholder="Например, противопоказанные препараты, аллергии, особенности породы или рекомендации врача"
+                ></textarea>
+
+                <div class="photo-field">
+                    <label for="pet_photo_file">Фотография</label>
+                    <div id="photo_preview" class="photo-preview"></div>
+                    <input id="pet_photo_file" type="file" accept="image/*" onchange="handlePhotoUpload(event)">
+                </div>
+                <p class="hint">Если фото не выбрать, карточка останется с мягкой цветной заглушкой.</p>
+
+                <button class="primary-btn" type="button" onclick="savePet()">Сохранить питомца</button>
+            </div>
+        </section>
+
+        <section id="detail_screen" class="screen">
+            <div id="pet_detail"></div>
+        </section>
+    </main>
+
+    <script>
+        const tg = window.Telegram?.WebApp || null;
+        if (tg?.expand) {
+            tg.expand();
+        }
+
+        const STORAGE_KEY = "pet-care-tracker-data-v2";
+        const LEGACY_STORAGE_KEY = "pet-care-tracker-data-v1";
+        const DEFAULT_REMINDERS = [30, 7, 1];
+        const CARE_TYPES = [
+            { key: "complexVaccine", title: "Комплексная", shortTitle: "Комплекс" },
+            { key: "rabiesVaccine", title: "Бешенство", shortTitle: "Бешенство" },
+            { key: "tickTreatment", title: "Клещи", shortTitle: "Клещи" },
+            { key: "parasiteTreatment", title: "Паразиты", shortTitle: "Паразиты" }
+        ];
+
+        const BREEDS = {
+            dog: [
+                "Без породы",
+                "Австралийская овчарка",
+                "Австралийский келпи",
+                "Австралийский терьер",
+                "Акита-ину",
+                "Аляскинский маламут",
+                "Американская акита",
+                "Американский булли",
+                "Американский бульдог",
+                "Американский кокер-спаниель",
+                "Американский стаффордширский терьер",
+                "Английский бульдог",
+                "Английский кокер-спаниель",
+                "Английский сеттер",
+                "Английский спрингер-спаниель",
+                "Английский той-терьер",
+                "Английский фоксхаунд",
+                "Аппенцеллер зенненхунд",
+                "Аргентинский дог",
+                "Афганская борзая",
+                "Аффенпинчер",
+                "Басенджи",
+                "Бассет-хаунд",
+                "Бедлингтон-терьер",
+                "Белая швейцарская овчарка",
+                "Бельгийская овчарка грюнендаль",
+                "Бельгийская овчарка лакенуа",
+                "Бельгийская овчарка малинуа",
+                "Бельгийская овчарка тервюрен",
+                "Бернский зенненхунд",
+                "Бигль",
+                "Бишон фризе",
+                "Бладхаунд",
+                "Бобтейл",
+                "Боксер",
+                "Бордер-колли",
+                "Бордер-терьер",
+                "Бородатая колли",
+                "Босерон",
+                "Бостон-терьер",
+                "Брюссельский гриффон",
+                "Бульмастиф",
+                "Бультерьер",
+                "Веймаранер",
+                "Вельш-корги кардиган",
+                "Вельш-корги пемброк",
+                "Вельштерьер",
+                "Венгерская выжла",
+                "Вест-хайленд-уайт-терьер",
+                "Восточноевропейская овчарка",
+                "Гаванский бишон",
+                "Гладкошерстный фокстерьер",
+                "Голдендудль",
+                "Голубой гасконский бассет",
+                "Грейхаунд",
+                "Далматин",
+                "Денди-динмонт-терьер",
+                "Джек-рассел-терьер",
+                "Доберман",
+                "Дратхаар",
+                "Ирландский волкодав",
+                "Ирландский красный сеттер",
+                "Ирландский мягкошерстный пшеничный терьер",
+                "Ирландский терьер",
+                "Итальянская левретка",
+                "Йоркширский терьер",
+                "Кавалер-кинг-чарльз-спаниель",
+                "Кане-корсо",
+                "Карликовый пинчер",
+                "Кеесхонд",
+                "Керн-терьер",
+                "Кинг-чарльз-спаниель",
+                "Китайская хохлатая собака",
+                "Колли длинношерстная",
+                "Колли короткошерстная",
+                "Котон-де-тулеар",
+                "Кроличья такса",
+                "Курцхаар",
+                "Лабрадор-ретривер",
+                "Лаготто-романьоло",
+                "Лайка восточносибирская",
+                "Лайка западносибирская",
+                "Лайка карело-финская",
+                "Лайка русско-европейская",
+                "Левретка",
+                "Леонбергер",
+                "Лхаса апсо",
+                "Мальтийская болонка",
+                "Манчестер-терьер",
+                "Мареммо-абруццкая овчарка",
+                "Мастиф",
+                "Мексиканская голая собака",
+                "Миттельшнауцер",
+                "Мопс",
+                "Московская сторожевая",
+                "Немецкая овчарка",
+                "Немецкий дог",
+                "Немецкий пинчер",
+                "Немецкий шпиц",
+                "Норвич-терьер",
+                "Норфолк-терьер",
+                "Ньюфаундленд",
+                "Папильон",
+                "Парсон-рассел-терьер",
+                "Пекинес",
+                "Пиренейская горная собака",
+                "Пойнтер",
+                "Померанский шпиц",
+                "Португальская водяная собака",
+                "Пражский крысарик",
+                "Прямошерстный ретривер",
+                "Пудель большой",
+                "Пудель карликовый",
+                "Пудель малый",
+                "Пудель той",
+                "Ризеншнауцер",
+                "Родезийский риджбек",
+                "Ротвейлер",
+                "Русская псовая борзая",
+                "Русский той",
+                "Русский черный терьер",
+                "Салюки",
+                "Самоед",
+                "Сенбернар",
+                "Сиба-ину",
+                "Сибирский хаски",
+                "Скай-терьер",
+                "Скотч-терьер",
+                "Среднеазиатская овчарка",
+                "Стаффордширский бультерьер",
+                "Такса длинношерстная",
+                "Такса жесткошерстная",
+                "Такса стандартная",
+                "Тибетский мастиф",
+                "Тибетский спаниель",
+                "Тибетский терьер",
+                "Уиппет",
+                "Фараонова собака",
+                "Фландрский бувье",
+                "Фокстерьер",
+                "Французский бульдог",
+                "Цвергпинчер",
+                "Цвергшнауцер",
+                "Чау-чау",
+                "Чесапик-бей-ретривер",
+                "Чихуахуа",
+                "Шарпей",
+                "Шелти",
+                "Ши-тцу",
+                "Шипперке",
+                "Шотландский сеттер",
+                "Энтлебухер зенненхунд",
+                "Эрдельтерьер",
+                "Южнорусская овчарка",
+                "Японский хин",
+                "Японский шпиц"
+            ],
+            cat: [
+                "Без породы",
+                "Абиссинская",
+                "Австралийская дымчатая",
+                "Американская жесткошерстная",
+                "Американская короткошерстная",
+                "Американский бобтейл",
+                "Американский керл",
+                "Анатолийская",
+                "Аравийский мау",
+                "Балийская",
+                "Бенгальская",
+                "Бирманская",
+                "Бомбейская",
+                "Бразильская короткошерстная",
+                "Британская длинношерстная",
+                "Британская короткошерстная",
+                "Бурма",
+                "Бурмилла",
+                "Гавана браун",
+                "Гималайская",
+                "Девон-рекс",
+                "Донской сфинкс",
+                "Европейская короткошерстная",
+                "Египетская мау",
+                "Калифорнийская сияющая",
+                "Канадский сфинкс",
+                "Као-мани",
+                "Кимрик",
+                "Корат",
+                "Корниш-рекс",
+                "Курильский бобтейл",
+                "Лаперм",
+                "Ликой",
+                "Манчкин",
+                "Мейн-кун",
+                "Меконгский бобтейл",
+                "Минскин",
+                "Мэнкс",
+                "Невская маскарадная",
+                "Немецкий рекс",
+                "Норвежская лесная",
+                "Ориентальная",
+                "Оцикет",
+                "Персидская",
+                "Петерболд",
+                "Пиксибоб",
+                "Рагамаффин",
+                "Русская голубая",
+                "Рэгдолл",
+                "Саванна",
+                "Селкирк-рекс",
+                "Серенгети",
+                "Сиамская",
+                "Сибирская",
+                "Сингапурская",
+                "Скоттиш-страйт",
+                "Сноу-шу",
+                "Сококе",
+                "Сомалийская",
+                "Тайская",
+                "Тойгер",
+                "Тонкинская",
+                "Турецкая ангора",
+                "Турецкий ван",
+                "Украинский левкой",
+                "Уральский рекс",
+                "Хайленд-страйт",
+                "Хайленд-фолд",
+                "Цейлонская",
+                "Шантильи-тиффани",
+                "Шартрез",
+                "Шотландская вислоухая",
+                "Экзотическая короткошерстная",
+                "Яванская",
+                "Японский бобтейл"
+            ]
+        };
+
+        let appState = loadState();
+        let currentScreen = "home";
+        let selectedPetId = appState.pets[0]?.id || "";
+        let editingPetId = "";
+        let activeCareKey = CARE_TYPES[0].key;
+        let uploadedPhotoData = "";
+
+        function loadState() {
+            const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+            if (!raw) {
+                return { pets: [] };
+            }
+
+            try {
+                const parsed = JSON.parse(raw);
+                return {
+                    pets: Array.isArray(parsed.pets) ? parsed.pets.map(normalizePet) : []
+                };
+            } catch (error) {
+                return { pets: [] };
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        }
+
+        function createId() {
+            return "pet-" + Date.now() + "-" + Math.random().toString(16).slice(2, 8);
+        }
+
+        function createPet(base) {
+            const care = {};
+            CARE_TYPES.forEach((item) => {
+                care[item.key] = {
+                    date: "",
+                    medicine: "",
+                    intervalDays: "",
+                    note: "",
+                    reminders: [...DEFAULT_REMINDERS],
+                    history: []
+                };
+            });
+
+            return normalizePet({
+                id: base.id || createId(),
+                name: base.name || "",
+                type: base.type || "dog",
+                breed: base.breed || BREEDS.dog[0],
+                birthDate: base.birthDate || "",
+                importantInfo: base.importantInfo || "",
+                photo: base.photo || "",
+                care
+            });
+        }
+
+        function normalizePet(pet) {
+            const type = pet.type === "cat" ? "cat" : "dog";
+            const normalized = {
+                id: pet.id || createId(),
+                name: pet.name || "",
+                type,
+                breed: pet.breed || BREEDS[type][0],
+                birthDate: pet.birthDate || "",
+                importantInfo: pet.importantInfo || "",
+                photo: pet.photo || "",
+                care: {}
+            };
+
+            CARE_TYPES.forEach((item) => {
+                const oldCare = pet.care?.[item.key] || {};
+                const hasSavedHistory = Array.isArray(oldCare.history) && oldCare.history.length;
+                const movedCurrentToHistory = !hasSavedHistory && (oldCare.date || oldCare.vaccinationDate);
+                const history = normalizeCareHistory(oldCare);
+                normalized.care[item.key] = {
+                    date: movedCurrentToHistory ? "" : oldCare.date || oldCare.vaccinationDate || "",
+                    medicine: movedCurrentToHistory ? "" : oldCare.medicine || "",
+                    intervalDays: oldCare.intervalDays || "",
+                    note: movedCurrentToHistory ? "" : oldCare.note || "",
+                    reminders: Array.isArray(oldCare.reminders) && oldCare.reminders.length
+                        ? oldCare.reminders.map(Number)
+                        : [...DEFAULT_REMINDERS],
+                    history
+                };
+            });
+
+            return normalized;
+        }
+
+        function normalizeCareHistory(care) {
+            const existingHistory = Array.isArray(care.history) ? care.history : [];
+            const migratedCurrentRecord = !existingHistory.length && (care.date || care.vaccinationDate)
+                ? [{
+                    id: createId(),
+                    date: care.date || care.vaccinationDate || "",
+                    medicine: care.medicine || "",
+                    intervalDays: care.intervalDays || "",
+                    note: care.note || "",
+                    reminders: Array.isArray(care.reminders) && care.reminders.length
+                        ? care.reminders.map(Number)
+                        : [...DEFAULT_REMINDERS],
+                    createdAt: new Date().toISOString()
+                }]
+                : [];
+
+            return [...existingHistory, ...migratedCurrentRecord]
+                .map((record) => ({
+                    id: record.id || createId(),
+                    date: record.date || "",
+                    medicine: record.medicine || "",
+                    intervalDays: record.intervalDays || "",
+                    note: record.note || "",
+                    reminders: Array.isArray(record.reminders) && record.reminders.length
+                        ? record.reminders.map(Number)
+                        : [...DEFAULT_REMINDERS],
+                    createdAt: record.createdAt || new Date().toISOString()
+                }))
+                .filter((record) => record.date || record.medicine || record.note)
+                .sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+        }
+
+        function setScreen(screen) {
+            currentScreen = screen;
+            document.getElementById("home_screen").classList.toggle("active", screen === "home");
+            document.getElementById("form_screen").classList.toggle("active", screen === "form");
+            document.getElementById("detail_screen").classList.toggle("active", screen === "detail");
+        }
+
+        function showHome() {
+            editingPetId = "";
+            setScreen("home");
+            renderHome();
+        }
+
+        function showPetForm(petId = "") {
+            editingPetId = petId;
+            uploadedPhotoData = "";
+            document.getElementById("form_title").innerText = petId ? "Изменить питомца" : "Добавить питомца";
+
+            if (petId) {
+                const pet = getPet(petId);
+                if (pet) {
+                    document.getElementById("pet_name").value = pet.name;
+                    document.getElementById("pet_type").value = pet.type;
+                    populateBreeds(pet.breed);
+                    document.getElementById("pet_birth_date").value = pet.birthDate;
+                    document.getElementById("pet_important_info").value = pet.importantInfo;
+                    document.getElementById("pet_photo_file").value = "";
+                    uploadedPhotoData = pet.photo || "";
+                    updatePhotoPreview(pet.photo);
+                }
+            } else {
+                document.getElementById("pet_name").value = "";
+                document.getElementById("pet_type").value = "dog";
+                populateBreeds();
+                document.getElementById("pet_birth_date").value = "";
+                document.getElementById("pet_important_info").value = "";
+                document.getElementById("pet_photo_file").value = "";
+                updatePhotoPreview("");
+            }
+
+            setScreen("form");
+        }
+
+        function showDetail(petId) {
+            selectedPetId = petId;
+            activeCareKey = activeCareKey || CARE_TYPES[0].key;
+            setScreen("detail");
+            renderDetail();
+        }
+
+        function getPet(petId) {
+            return appState.pets.find((pet) => pet.id === petId);
+        }
+
+        function populateBreeds(selectedBreed) {
+            const type = document.getElementById("pet_type").value;
+            const breedSelect = document.getElementById("pet_breed");
+            const options = BREEDS[type] || [];
+            breedSelect.innerHTML = options
+                .map((breed) => `<option value="${escapeHtml(breed)}">${escapeHtml(breed)}</option>`)
+                .join("");
+            breedSelect.value = selectedBreed && options.includes(selectedBreed) ? selectedBreed : options[0];
+        }
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files?.[0];
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                uploadedPhotoData = reader.result;
+                updatePhotoPreview(uploadedPhotoData);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updatePhotoPreview(photo) {
+            const preview = document.getElementById("photo_preview");
+            if (photo) {
+                preview.innerHTML = `<img src="${escapeHtml(photo)}" alt="Фото питомца">`;
+                return;
+            }
+            preview.innerHTML = escapeHtml(document.getElementById("pet_name").value.trim() || "Имя");
+        }
+
+        function refreshNamePreview() {
+            if (!uploadedPhotoData) {
+                updatePhotoPreview("");
+            }
+        }
+
+        function savePet() {
+            const name = document.getElementById("pet_name").value.trim();
+            const type = document.getElementById("pet_type").value;
+            const breed = document.getElementById("pet_breed").value;
+            const birthDate = document.getElementById("pet_birth_date").value;
+            const importantInfo = document.getElementById("pet_important_info").value.trim();
+            const photo = uploadedPhotoData;
+
+            if (!name) {
+                showAlert("Введите имя питомца.");
+                return;
+            }
+
+            if (editingPetId) {
+                const pet = getPet(editingPetId);
+                if (!pet) return;
+                pet.name = name;
+                pet.type = type;
+                pet.breed = breed;
+                pet.birthDate = birthDate;
+                pet.importantInfo = importantInfo;
+                pet.photo = photo;
+                selectedPetId = pet.id;
+            } else {
+                const pet = createPet({ name, type, breed, birthDate, importantInfo, photo });
+                appState.pets.unshift(pet);
+                selectedPetId = pet.id;
+            }
+
+            saveState();
+            showDetail(selectedPetId);
+        }
+
+        function deletePet(petId) {
+            const pet = getPet(petId);
+            if (!pet) return;
+
+            const confirmed = window.confirm(`Удалить питомца ${pet.name}? Это действие нельзя отменить.`);
+            if (!confirmed) return;
+
+            appState.pets = appState.pets.filter((item) => item.id !== petId);
+            selectedPetId = appState.pets[0]?.id || "";
+            editingPetId = "";
+            saveState();
+            showHome();
+        }
+
+        function renderHome() {
+            const list = document.getElementById("pets_list");
+
+            if (!appState.pets.length) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <p class="empty-note">Пока нет питомцев. Начните с первой карточки, а дальше мы добавим вакцинации и обработки.</p>
+                        <button class="add-card" type="button" onclick="showPetForm()">
+                            <span class="add-icon">+</span>
+                            <strong>Добавить питомца</strong>
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = `
+                ${appState.pets.map((pet) => renderPetCard(pet)).join("")}
+                <button class="add-card" type="button" onclick="showPetForm()">
+                    <span class="add-icon">+</span>
+                    <strong>Добавить питомца</strong>
+                </button>
+            `;
+        }
+
+        function renderPetCard(pet) {
+            return `
+                <button class="pet-card" type="button" onclick="showDetail('${pet.id}')">
+                    <div class="pet-photo">${renderPhoto(pet)}</div>
+                    <div>
+                        <h2>${escapeHtml(pet.name)}</h2>
+                        <p>${formatType(pet.type)} · ${escapeHtml(pet.breed)}</p>
+                        <p>${pet.birthDate ? "Дата рождения: " + formatDate(pet.birthDate) : "Дата рождения не указана"}</p>
+                    </div>
+                    <span class="arrow">›</span>
+                </button>
+            `;
+        }
+
+        function renderDetail() {
+            const pet = getPet(selectedPetId);
+            const container = document.getElementById("pet_detail");
+            if (!pet) {
+                showHome();
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="detail-title">
+                    <button class="back-btn" type="button" onclick="showHome()">‹</button>
+                    <h2>Карточка</h2>
+                    <div class="detail-actions">
+                        <button class="round-action danger-action" type="button" onclick="deletePet('${pet.id}')">×</button>
+                        <button class="round-action" type="button" onclick="showPetForm('${pet.id}')">✎</button>
+                    </div>
+                </div>
+
+                <section class="profile-hero">
+                    <div class="pet-photo">${renderPhoto(pet)}</div>
+                    <div>
+                        <h2>${escapeHtml(pet.name)}</h2>
+                        <div class="chips">
+                            <span class="chip">${formatType(pet.type)}</span>
+                            <span class="chip green">${escapeHtml(pet.breed)}</span>
+                            <span class="chip">${pet.birthDate ? formatDate(pet.birthDate) : "дата рождения не указана"}</span>
+                        </div>
+                    </div>
+                </section>
+
+                ${renderImportantInfo(pet)}
+
+                <nav class="tabs">
+                    ${CARE_TYPES.map((careType) => `
+                        <button
+                            class="tab-btn ${activeCareKey === careType.key ? "active" : ""}"
+                            type="button"
+                            onclick="setActiveCare('${careType.key}')"
+                        >
+                            ${careType.shortTitle}
+                        </button>
+                    `).join("")}
+                </nav>
+
+                ${renderActiveCare(pet)}
+
+                <div class="bottom-actions">
+                    <button class="secondary-btn" type="button" onclick="showHome()">К списку</button>
+                    <button class="primary-btn" type="button" onclick="sendData()">Отправить</button>
+                </div>
+            `;
+        }
+
+        function setActiveCare(careKey) {
+            activeCareKey = careKey;
+            renderDetail();
+        }
+
+        function renderImportantInfo(pet) {
+            const text = pet.importantInfo?.trim();
+            if (!text) {
+                return "";
+            }
+
+            return `
+                <details class="important-info">
+                    <summary>Важная информация</summary>
+                    <div class="important-info-content">${escapeHtml(text)}</div>
+                </details>
+            `;
+        }
+
+        function renderActiveCare(pet) {
+            const careType = CARE_TYPES.find((item) => item.key === activeCareKey) || CARE_TYPES[0];
+            const care = pet.care[careType.key];
+            const latestRecord = getLatestCareRecord(care);
+            const nextDate = calculateNextDate(
+                care.date || latestRecord?.date,
+                care.intervalDays || latestRecord?.intervalDays
+            );
+
+            return `
+                <section class="care-card">
+                    <div class="care-head">
+                        <div>
+                            <h3>${careType.title}</h3>
+                            <p class="meta-text">Заполните данные.</p>
+                        </div>
+                        <div class="next-date">${nextDate || "Нет даты"}</div>
+                    </div>
+
+                    <div class="care-fields">
+                        <label for="${careType.key}_date">Дата вакцинации / обработки</label>
+                        <input
+                            id="${careType.key}_date"
+                            type="date"
+                            value="${escapeHtml(care.date)}"
+                            onchange="updateCareField('${pet.id}', '${careType.key}', 'date', this.value)"
+                        >
+
+                        <label for="${careType.key}_medicine">Препарат</label>
+                        <input
+                            id="${careType.key}_medicine"
+                            type="text"
+                            placeholder="Название препарата"
+                            value="${escapeHtml(care.medicine)}"
+                            oninput="updateCareField('${pet.id}', '${careType.key}', 'medicine', this.value, false)"
+                        >
+
+                        <label for="${careType.key}_interval">Интервал до следующей процедуры, дней</label>
+                        <input
+                            id="${careType.key}_interval"
+                            type="number"
+                            min="1"
+                            placeholder="Например, 365"
+                            value="${escapeHtml(care.intervalDays)}"
+                            onchange="updateCareField('${pet.id}', '${careType.key}', 'intervalDays', this.value)"
+                        >
+
+                        <label class="reminders-title">Напоминания</label>
+                        <div class="reminders">
+                            ${DEFAULT_REMINDERS.map((day) => `
+                                <label class="reminder-option">
+                                    <input
+                                        type="checkbox"
+                                        ${care.reminders.includes(day) ? "checked" : ""}
+                                        onchange="toggleReminder('${pet.id}', '${careType.key}', ${day}, this.checked)"
+                                    >
+                                    <span>за ${day} ${pluralizeDays(day)}</span>
+                                </label>
+                            `).join("")}
+                        </div>
+
+                        <label for="${careType.key}_note">Заметка</label>
+                        <textarea
+                            id="${careType.key}_note"
+                            placeholder="Например, реакция, рекомендации врача или важные детали"
+                            oninput="updateCareField('${pet.id}', '${careType.key}', 'note', this.value, false)"
+                        >${escapeHtml(care.note)}</textarea>
+
+                        <button class="primary-btn inline-care-action" type="button" onclick="addCareHistoryEntry('${pet.id}', '${careType.key}')">
+                            Добавить запись в историю
+                        </button>
+                    </div>
+
+                    ${renderCareHistory(pet, careType)}
+                </section>
+            `;
+        }
+
+        function getLatestCareRecord(care) {
+            const history = Array.isArray(care.history) ? care.history : [];
+            return [...history]
+                .filter((record) => record.date || record.medicine || record.note)
+                .sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt))[0];
+        }
+
+        function addCareHistoryEntry(petId, careKey) {
+            const pet = getPet(petId);
+            if (!pet) return;
+
+            const care = pet.care[careKey];
+            if (!care.date) {
+                showAlert("Укажите дату записи.");
+                return;
+            }
+
+            const record = {
+                id: createId(),
+                date: care.date,
+                medicine: care.medicine || "",
+                intervalDays: care.intervalDays || "",
+                note: care.note || "",
+                reminders: [...(care.reminders || DEFAULT_REMINDERS)],
+                createdAt: new Date().toISOString()
+            };
+
+            care.history = [record, ...(care.history || [])]
+                .sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+            care.date = "";
+            care.medicine = "";
+            care.note = "";
+            saveState();
+            renderDetail();
+        }
+
+        function deleteCareHistoryEntry(petId, careKey, recordId) {
+            const pet = getPet(petId);
+            if (!pet) return;
+
+            const confirmed = window.confirm("Удалить эту запись из истории?");
+            if (!confirmed) return;
+
+            const care = pet.care[careKey];
+            care.history = (care.history || []).filter((record) => record.id !== recordId);
+            saveState();
+            renderDetail();
+        }
+
+        function renderCareHistory(pet, careType) {
+            const care = pet.care[careType.key];
+            const history = Array.isArray(care.history) ? care.history : [];
+
+            if (!history.length) {
+                return `
+                    <div class="history-section">
+                        <h4 class="history-title">История</h4>
+                        <p class="meta-text">Пока записей нет. Добавьте первую запись выше.</p>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="history-section">
+                    <h4 class="history-title">История</h4>
+                    <div class="history-list">
+                        ${history.map((record) => `
+                            <article class="history-card">
+                                <div class="history-card-head">
+                                    <strong>${record.date ? formatDate(record.date) : "Без даты"}</strong>
+                                    <button
+                                        class="history-delete"
+                                        type="button"
+                                        onclick="deleteCareHistoryEntry('${pet.id}', '${careType.key}', '${record.id}')"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                                ${record.medicine ? `<p><strong>Препарат:</strong> ${escapeHtml(record.medicine)}</p>` : ""}
+                                ${record.intervalDays ? `<p><strong>Интервал:</strong> ${escapeHtml(record.intervalDays)} ${pluralizeDays(Number(record.intervalDays))}</p>` : ""}
+                                ${record.note ? `<p><strong>Заметка:</strong> ${escapeHtml(record.note)}</p>` : ""}
+                                ${record.reminders?.length ? `<p><strong>Напоминания:</strong> ${record.reminders.map((day) => `за ${day} ${pluralizeDays(day)}`).join(", ")}</p>` : ""}
+                            </article>
+                        `).join("")}
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateCareField(petId, careKey, field, value, shouldRerender = true) {
+            const pet = getPet(petId);
+            if (!pet) return;
+            pet.care[careKey][field] = value;
+            saveState();
+
+            if (shouldRerender) {
+                renderDetail();
+            }
+        }
+
+        function toggleReminder(petId, careKey, day, checked) {
+            const pet = getPet(petId);
+            if (!pet) return;
+
+            const reminders = new Set((pet.care[careKey].reminders || []).map(Number));
+            if (checked) {
+                reminders.add(day);
+            } else {
+                reminders.delete(day);
+            }
+            pet.care[careKey].reminders = Array.from(reminders).sort((a, b) => b - a);
+            saveState();
+        }
+
+        function renderPhoto(pet) {
+            if (!pet.photo) return escapeHtml(pet.name || "Имя");
+            return `<img src="${escapeHtml(pet.photo)}" alt="${escapeHtml(pet.name)}">`;
+        }
+
+        function formatType(type) {
+            return type === "cat" ? "кошка" : "собака";
+        }
+
+        function formatDate(dateValue) {
+            if (!dateValue) return "";
+            const date = new Date(dateValue);
+            if (Number.isNaN(date.getTime())) return "";
+            return date.toLocaleDateString("ru-RU", {
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            });
+        }
+
+        function calculateNextDate(lastDate, intervalDays) {
+            if (!lastDate || !intervalDays) return "";
+            const date = new Date(lastDate);
+            const interval = Number(intervalDays);
+            if (Number.isNaN(date.getTime()) || !interval) return "";
+            date.setDate(date.getDate() + interval);
+            return date.toLocaleDateString("ru-RU", {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+            });
+        }
+
+        function pluralizeDays(value) {
+            const mod10 = value % 10;
+            const mod100 = value % 100;
+            if (mod10 === 1 && mod100 !== 11) return "день";
+            if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "дня";
+            return "дней";
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        function sendData() {
+            const payload = {
+                pets: appState.pets.map((pet) => ({
+                    id: pet.id,
+                    name: pet.name,
+                    type: formatType(pet.type),
+                    breed: pet.breed,
+                    birthDate: pet.birthDate,
+                    importantInfo: pet.importantInfo,
+                    photo: pet.photo,
+                    care: CARE_TYPES.map((careType) => {
+                        const care = pet.care[careType.key];
+                        const latestRecord = getLatestCareRecord(care);
+                        return {
+                            title: careType.title,
+                            date: care.date,
+                            note: care.note,
+                            medicine: care.medicine,
+                            intervalDays: care.intervalDays,
+                            nextDate: calculateNextDate(
+                                care.date || latestRecord?.date,
+                                care.intervalDays || latestRecord?.intervalDays
+                            ),
+                            reminders: care.reminders,
+                            history: care.history || []
+                        };
+                    })
+                }))
+            };
+
+            if (tg?.sendData) {
+                tg.sendData(JSON.stringify(payload));
+                showAlert("Данные отправлены в Telegram.");
+                return;
+            }
+
+            console.log("Telegram payload", payload);
+            showAlert("Telegram Web App недоступен. Данные выведены в консоль браузера.");
+        }
+
+        function showAlert(message) {
+            if (tg?.showAlert) {
+                tg.showAlert(message);
+                return;
+            }
+            window.alert(message);
+        }
+
+        populateBreeds();
+        renderHome();
+    </script>
+</body>
+</html>
