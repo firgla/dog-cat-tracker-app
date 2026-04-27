@@ -1,6 +1,7 @@
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { createSessionResponse, serializeUser } from "@/lib/auth";
+import { createSessionResponse, getUserFromSession, serializeUser } from "@/lib/auth";
 import { handleRouteError, ApiError } from "@/lib/http";
 import { getDevelopmentTelegramIdentity, upsertTelegramUser, verifyTelegramInitData } from "@/lib/telegram";
 
@@ -10,10 +11,20 @@ const authSchema = z.object({
   initData: z.string().optional().nullable(),
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = authSchema.parse(await request.json());
     const initData = body.initData?.trim();
+
+    if (!initData) {
+      const existingUser = await getUserFromSession(request);
+
+      if (existingUser) {
+        return NextResponse.json({
+          user: serializeUser(existingUser),
+        });
+      }
+    }
 
     const identity =
       initData && initData.length > 0
@@ -21,7 +32,7 @@ export async function POST(request: Request) {
         : process.env.NODE_ENV !== "production"
           ? getDevelopmentTelegramIdentity()
           : (() => {
-              throw new ApiError(400, "Telegram initData is required.");
+              throw new ApiError(400, "Откройте NoraCare из Telegram, чтобы войти в приложение.");
             })();
 
     const user = await upsertTelegramUser(identity);

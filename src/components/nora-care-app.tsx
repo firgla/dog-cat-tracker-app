@@ -15,6 +15,11 @@ type PreferencesFormState = {
   timezone: string;
 };
 
+type BootstrapResult = {
+  user: ApiUser;
+  pets: ApiPet[];
+};
+
 async function apiFetch<T>(input: string, init?: RequestInit) {
   const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
   const response = await fetch(input, {
@@ -59,7 +64,7 @@ function serializeTelegramPayload(pets: ApiPet[]) {
 }
 
 export function NoraCareApp() {
-  const [status, setStatus] = useState<"booting" | "ready" | "error">("booting");
+  const [status, setStatus] = useState<"booting" | "ready" | "needs-telegram" | "error">("booting");
   const [screen, setScreen] = useState<Screen>("home");
   const [user, setUser] = useState<ApiUser | null>(null);
   const [pets, setPets] = useState<ApiPet[]>([]);
@@ -89,19 +94,55 @@ export function NoraCareApp() {
 
     void (async () => {
       try {
-        const authResponse = await apiFetch<{ user: ApiUser }>("/api/auth/telegram", {
-          method: "POST",
-          body: JSON.stringify({ initData: tg?.initData ?? "" }),
-        });
-        const petsResponse = await apiFetch<{ pets: ApiPet[] }>("/api/pets");
+        const initData = tg?.initData?.trim() ?? "";
+        let bootstrap: BootstrapResult | null = null;
 
-        setUser(authResponse.user);
-        setPets(petsResponse.pets);
-        setSelectedPetId(petsResponse.pets[0]?.id ?? "");
+        try {
+          const meResponse = await apiFetch<{ user: ApiUser }>("/api/me");
+          const petsResponse = await apiFetch<{ pets: ApiPet[] }>("/api/pets");
+
+          bootstrap = {
+            user: meResponse.user,
+            pets: petsResponse.pets,
+          };
+        } catch (error) {
+          const isUnauthorized =
+            error instanceof Error &&
+            (error.message === "Authentication required." || error.message === "Session expired.");
+
+          if (!isUnauthorized) {
+            throw error;
+          }
+
+          if (!initData) {
+            setErrorMessage("Откройте NoraCare из Telegram при первом входе. После этого приложение будет доступно и в браузере по текущей ссылке.");
+            setStatus("needs-telegram");
+            return;
+          }
+
+          const authResponse = await apiFetch<{ user: ApiUser }>("/api/auth/telegram", {
+            method: "POST",
+            body: JSON.stringify({ initData }),
+          });
+          const petsResponse = await apiFetch<{ pets: ApiPet[] }>("/api/pets");
+
+          bootstrap = {
+            user: authResponse.user,
+            pets: petsResponse.pets,
+          };
+        }
+
+        if (!bootstrap) {
+          throw new Error("Не удалось инициализировать приложение.");
+        }
+
+        setUser(bootstrap.user);
+        setPets(bootstrap.pets);
+        setSelectedPetId(bootstrap.pets[0]?.id ?? "");
         setPreferencesForm({
-          notificationsEnabled: authResponse.user.notificationsEnabled ?? true,
-          notificationTimeLocal: authResponse.user.notificationTimeLocal ?? "09:00",
-          timezone: authResponse.user.timezone ?? browserTimeZone,
+          notificationsEnabled: bootstrap.user.notificationsEnabled ?? true,
+          notificationTimeLocal: bootstrap.user.notificationTimeLocal ?? "09:00",
+          timezone: bootstrap.user.timezone ?? browserTimeZone,
         });
         setStatus("ready");
       } catch (error) {
@@ -354,6 +395,22 @@ export function NoraCareApp() {
           <div className="loading-card">
             <h2>Не удалось открыть NoraCare</h2>
             <p className="helper-text">{errorMessage ?? "Попробуйте обновить страницу или открыть приложение из Telegram."}</p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (status === "needs-telegram") {
+    return (
+      <main className="app-shell">
+        <section className="screen">
+          <div className="loading-card">
+            <h2>Откройте NoraCare из Telegram</h2>
+            <p className="helper-text">
+              {errorMessage ??
+                "Для первого входа нужен запуск из Telegram Web App. После авторизации приложение продолжит работать по этой ссылке и в обычном браузере."}
+            </p>
           </div>
         </section>
       </main>

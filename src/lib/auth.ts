@@ -62,12 +62,12 @@ export async function createSessionResponse(user: UserRow, payload?: Record<stri
   return response;
 }
 
-export async function requireUser(request: NextRequest) {
+export async function getUserFromSession(request: NextRequest) {
   const db = getDb();
   const token = request.cookies.get(SESSION_COOKIE)?.value;
 
   if (!token) {
-    throw new ApiError(401, "Authentication required.");
+    return null;
   }
 
   const [row] = await db
@@ -81,7 +81,7 @@ export async function requireUser(request: NextRequest) {
     .limit(1);
 
   if (!row) {
-    throw new ApiError(401, "Session expired.");
+    return null;
   }
 
   await db
@@ -92,4 +92,20 @@ export async function requireUser(request: NextRequest) {
     .where(eq(sessions.id, row.sessionId));
 
   return row.user;
+}
+
+export async function requireUser(request: NextRequest) {
+  const token = request.cookies.get(SESSION_COOKIE)?.value;
+
+  if (!token) {
+    throw new ApiError(401, "Authentication required.");
+  }
+
+  const user = await getUserFromSession(request);
+
+  if (!user) {
+    throw new ApiError(401, "Session expired.");
+  }
+
+  return user;
 }
