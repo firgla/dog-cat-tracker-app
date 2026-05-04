@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+import { PhotoCropModal } from "@/components/photo-crop-modal";
 import { BREEDS, CARE_TYPES, DEFAULT_REMINDERS, type CareTypeKey, type PetKind } from "@/lib/constants";
 import type { ApiPet, ApiUser } from "@/lib/types";
 import { emptyPetForm, formatDate, formatPetType, pluralizeDays } from "@/lib/utils";
@@ -14,11 +15,42 @@ type PreferencesFormState = {
   notificationTimeLocal: string;
   timezone: string;
 };
+type CareEntryMode = "reminder" | "completed";
+type CompletedCareDraft = {
+  date: string;
+  medicine: string;
+  intervalDays: string;
+  note: string;
+  reminders: number[];
+};
 
 type BootstrapResult = {
   user: ApiUser;
   pets: ApiPet[];
 };
+
+function createCareEntryModes() {
+  return Object.fromEntries(CARE_TYPES.map((careType) => [careType.key, "reminder"])) as Record<
+    CareTypeKey,
+    CareEntryMode
+  >;
+}
+
+function createCompletedCareDraft(care?: ApiPet["care"][CareTypeKey]): CompletedCareDraft {
+  return {
+    date: "",
+    medicine: care?.medicine ?? "",
+    intervalDays: care?.intervalDays ?? "",
+    note: "",
+    reminders: care?.reminders ? [...care.reminders] : [...DEFAULT_REMINDERS],
+  };
+}
+
+function createCompletedCareDraftMap(pet: ApiPet | null) {
+  return Object.fromEntries(
+    CARE_TYPES.map((careType) => [careType.key, createCompletedCareDraft(pet?.care[careType.key])]),
+  ) as Record<CareTypeKey, CompletedCareDraft>;
+}
 
 async function apiFetch<T>(input: string, init?: RequestInit) {
   const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
@@ -71,9 +103,14 @@ export function NoraCareApp() {
   const [selectedPetId, setSelectedPetId] = useState("");
   const [editingPetId, setEditingPetId] = useState("");
   const [activeCareKey, setActiveCareKey] = useState<CareTypeKey>(CARE_TYPES[0].key);
+  const [careEntryModes, setCareEntryModes] = useState<Record<CareTypeKey, CareEntryMode>>(createCareEntryModes());
+  const [completedCareDrafts, setCompletedCareDrafts] = useState<Record<CareTypeKey, CompletedCareDraft>>(
+    createCompletedCareDraftMap(null),
+  );
   const [petForm, setPetForm] = useState<PetFormState>(emptyPetForm());
   const [petPhotoFile, setPetPhotoFile] = useState<File | null>(null);
   const [petPhotoPreview, setPetPhotoPreview] = useState<string | null>(null);
+  const [pendingPetPhoto, setPendingPetPhoto] = useState<File | null>(null);
   const [preferencesForm, setPreferencesForm] = useState<PreferencesFormState>({
     notificationsEnabled: true,
     notificationTimeLocal: "09:00",
@@ -83,6 +120,7 @@ export function NoraCareApp() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSavingPet, setIsSavingPet] = useState(false);
   const [isSavingPreferences, setIsSavingPreferences] = useState(false);
+  const petPhotoPreviewRef = useRef<string | null>(null);
 
   const selectedPet = useMemo(() => pets.find((pet) => pet.id === selectedPetId) ?? null, [pets, selectedPetId]);
   const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -138,7 +176,7 @@ export function NoraCareApp() {
 
         setUser(bootstrap.user);
         setPets(bootstrap.pets);
-        setSelectedPetId(bootstrap.pets[0]?.id ?? "");
+        resetCareEditorState(bootstrap.pets[0] ?? null);
         setPreferencesForm({
           notificationsEnabled: bootstrap.user.notificationsEnabled ?? true,
           notificationTimeLocal: bootstrap.user.notificationTimeLocal ?? "09:00",
@@ -153,12 +191,33 @@ export function NoraCareApp() {
   }, [browserTimeZone]);
 
   useEffect(() => {
+    petPhotoPreviewRef.current = petPhotoPreview;
+  }, [petPhotoPreview]);
+
+  useEffect(() => {
     return () => {
-      if (petPhotoPreview?.startsWith("blob:")) {
-        URL.revokeObjectURL(petPhotoPreview);
+      if (petPhotoPreviewRef.current?.startsWith("blob:")) {
+        URL.revokeObjectURL(petPhotoPreviewRef.current);
       }
     };
-  }, [petPhotoPreview]);
+  }, []);
+
+  function resetCareEditorState(pet: ApiPet | null) {
+    setSelectedPetId(pet?.id ?? "");
+    setCareEntryModes(createCareEntryModes());
+    setCompletedCareDrafts(createCompletedCareDraftMap(pet));
+  }
+
+  function replacePetPhotoPreview(nextPreview: string | null) {
+    const currentPreview = petPhotoPreviewRef.current;
+
+    if (currentPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(currentPreview);
+    }
+
+    petPhotoPreviewRef.current = nextPreview;
+    setPetPhotoPreview(nextPreview);
+  }
 
   function showNotice(nextMessage: string) {
     setMessage(nextMessage);
@@ -187,7 +246,8 @@ export function NoraCareApp() {
     setEditingPetId("");
     setPetForm(emptyPetForm());
     setPetPhotoFile(null);
-    setPetPhotoPreview(null);
+    setPendingPetPhoto(null);
+    replacePetPhotoPreview(null);
     setScreen("form");
   }
 
@@ -201,7 +261,8 @@ export function NoraCareApp() {
       importantInfo: pet.importantInfo,
     });
     setPetPhotoFile(null);
-    setPetPhotoPreview(pet.photoUrl);
+    setPendingPetPhoto(null);
+    replacePetPhotoPreview(pet.photoUrl);
     setScreen("form");
   }
 
@@ -229,10 +290,11 @@ export function NoraCareApp() {
           body: formData,
         });
         nextPet = uploadResponse.pet;
+        replacePetPhotoPreview(nextPet.photoUrl);
       }
 
       upsertPet(nextPet, !editingPetId);
-      setSelectedPetId(nextPet.id);
+      resetCareEditorState(nextPet);
       setScreen("detail");
       showNotice(editingPetId ? "Карточка питомца обновлена." : "Питомец добавлен.");
     } catch (error) {
@@ -252,7 +314,7 @@ export function NoraCareApp() {
       await apiFetch<{ ok: true }>(`/api/pets/${petId}`, { method: "DELETE" });
       const nextPets = pets.filter((pet) => pet.id !== petId);
       setPets(nextPets);
-      setSelectedPetId(nextPets[0]?.id ?? "");
+      resetCareEditorState(nextPets[0] ?? null);
       setScreen("home");
       showNotice("Питомец удален.");
     } catch (error) {
@@ -317,8 +379,8 @@ export function NoraCareApp() {
       return;
     }
 
-    const care = selectedPet.care[careKey];
-    if (!care.date) {
+    const careDraft = completedCareDrafts[careKey];
+    if (!careDraft.date) {
       showError("Укажите дату записи.");
       return;
     }
@@ -327,19 +389,33 @@ export function NoraCareApp() {
       const response = await apiFetch<{ pet: ApiPet }>(`/api/pets/${selectedPet.id}/care/${careKey}/history`, {
         method: "POST",
         body: JSON.stringify({
-          date: care.date,
-          medicine: care.medicine || null,
-          intervalDays: care.intervalDays ? Number(care.intervalDays) : null,
-          note: care.note || null,
-          reminders: care.reminders,
+          date: careDraft.date,
+          medicine: careDraft.medicine || null,
+          intervalDays: careDraft.intervalDays ? Number(careDraft.intervalDays) : null,
+          note: careDraft.note || null,
+          reminders: careDraft.reminders,
         }),
       });
 
       upsertPet(response.pet);
+      setCompletedCareDrafts((current) => ({
+        ...current,
+        [careKey]: createCompletedCareDraft(response.pet.care[careKey]),
+      }));
       showNotice("Запись добавлена в историю.");
     } catch (error) {
       showError(error instanceof Error ? error.message : "Не удалось сохранить запись.");
     }
+  }
+
+  function updateCompletedCareDraft(
+    careKey: CareTypeKey,
+    updater: (draft: CompletedCareDraft) => CompletedCareDraft,
+  ) {
+    setCompletedCareDrafts((current) => ({
+      ...current,
+      [careKey]: updater(current[careKey]),
+    }));
   }
 
   async function deleteHistoryRecord(careKey: CareTypeKey, recordId: string) {
@@ -514,11 +590,11 @@ export function NoraCareApp() {
                       className="pet-card"
                       type="button"
                       onClick={() => {
-                        setSelectedPetId(pet.id);
+                        resetCareEditorState(pet);
                         setScreen("detail");
                       }}
                     >
-                      <div className="pet-photo">
+                      <div className={`pet-photo ${pet.photoUrl ? "has-image" : ""}`}>
                         {pet.photoUrl ? <img alt={pet.name} src={pet.photoUrl} /> : pet.name}
                       </div>
                       <div>
@@ -609,24 +685,36 @@ export function NoraCareApp() {
 
               <div className="photo-field">
                 <label htmlFor="pet_photo_file">Фотография</label>
-                <div className="photo-preview">
+                <div className={`photo-preview ${petPhotoPreview ? "has-image" : ""}`}>
                   {petPhotoPreview ? <img alt={petForm.name || "Питомец"} src={petPhotoPreview} /> : petForm.name || "Имя"}
                 </div>
-                <input
-                  id="pet_photo_file"
-                  accept="image/*"
-                  type="file"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0] ?? null;
-                    setPetPhotoFile(file);
+                <div className="photo-picker-controls">
+                  <label className="photo-picker-button" htmlFor="pet_photo_file">
+                    {petPhotoPreview ? "Выбрать другое фото" : "Выбрать и обрезать фото"}
+                  </label>
+                  <input
+                    id="pet_photo_file"
+                    accept="image/*"
+                    className="photo-picker-input"
+                    type="file"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
 
-                    if (petPhotoPreview?.startsWith("blob:")) {
-                      URL.revokeObjectURL(petPhotoPreview);
-                    }
+                      if (file) {
+                        setPendingPetPhoto(file);
+                      }
 
-                    setPetPhotoPreview(file ? URL.createObjectURL(file) : null);
-                  }}
-                />
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                  <p className="photo-picker-note">
+                    {petPhotoFile?.name
+                      ? `Готово к загрузке: ${petPhotoFile.name}`
+                      : petPhotoPreview
+                        ? "Текущее фото сохранено. Можно выбрать и обрезать новое."
+                        : "После выбора откроется квадратная обрезка."}
+                  </p>
+                </div>
               </div>
               <p className="hint">Если фото не выбрать, карточка останется с мягкой цветной заглушкой.</p>
 
@@ -654,7 +742,7 @@ export function NoraCareApp() {
               </div>
 
               <section className="profile-hero">
-                <div className="pet-photo">
+                <div className={`pet-photo ${selectedPet.photoUrl ? "has-image" : ""}`}>
                   {selectedPet.photoUrl ? <img alt={selectedPet.name} src={selectedPet.photoUrl} /> : selectedPet.name}
                 </div>
                 <div>
@@ -663,7 +751,9 @@ export function NoraCareApp() {
                     <span className="chip">{formatPetType(selectedPet.type)}</span>
                     <span className="chip green">{selectedPet.breed}</span>
                     <span className="chip">
-                      {selectedPet.birthDate ? formatDate(selectedPet.birthDate) : "дата рождения не указана"}
+                      {selectedPet.birthDate
+                        ? `Дата рождения: ${formatDate(selectedPet.birthDate)}`
+                        : "Дата рождения не указана"}
                     </span>
                   </div>
                 </div>
@@ -691,142 +781,266 @@ export function NoraCareApp() {
 
               {(() => {
                 const care = selectedPet.care[activeCareKey];
+                const careEntryMode = careEntryModes[activeCareKey];
+                const completedCareDraft = completedCareDrafts[activeCareKey];
 
                 return (
                   <section className="care-card">
                     <div className="care-head">
                       <div>
                         <h3>{CARE_TYPES.find((item) => item.key === activeCareKey)?.title}</h3>
-                        <p className="meta-text">Заполните данные.</p>
+                        <p className="meta-text">
+                          Сохраняйте отдельно будущие напоминания и уже сделанные процедуры, чтобы план и история не мешали друг другу.
+                        </p>
                       </div>
-                      <div className="next-date">{care.nextDate ? formatDate(care.nextDate, "d MMM yyyy") : "Нет даты"}</div>
+                      <div className="next-date">
+                        {care.nextDate
+                          ? care.date && care.nextDate === care.date
+                            ? `Запланировано: ${formatDate(care.nextDate, "d MMM yyyy")}`
+                            : formatDate(care.nextDate, "d MMM yyyy")
+                          : "Нет даты"}
+                      </div>
                     </div>
 
-                    <label htmlFor={`${activeCareKey}_date`}>Дата вакцинации / обработки</label>
-                    <input
-                      id={`${activeCareKey}_date`}
-                      type="date"
-                      value={care.date}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        updateSelectedPetLocal((pet) => ({
-                          ...pet,
-                          care: {
-                            ...pet.care,
-                            [activeCareKey]: {
-                              ...pet.care[activeCareKey],
-                              date: value,
-                            },
-                          },
-                        }));
-                        void persistCareProfile(activeCareKey, { date: value });
-                      }}
-                    />
+                    <nav className="care-mode-tabs">
+                      <button
+                        className={`care-mode-btn ${careEntryMode === "reminder" ? "active" : ""}`}
+                        type="button"
+                        onClick={() =>
+                          setCareEntryModes((current) => ({
+                            ...current,
+                            [activeCareKey]: "reminder",
+                          }))
+                        }
+                      >
+                        Сделать напоминание
+                      </button>
+                      <button
+                        className={`care-mode-btn ${careEntryMode === "completed" ? "active" : ""}`}
+                        type="button"
+                        onClick={() =>
+                          setCareEntryModes((current) => ({
+                            ...current,
+                            [activeCareKey]: "completed",
+                          }))
+                        }
+                      >
+                        Добавить сделанное
+                      </button>
+                    </nav>
 
-                    <label htmlFor={`${activeCareKey}_medicine`}>Препарат</label>
-                    <input
-                      id={`${activeCareKey}_medicine`}
-                      placeholder="Название препарата"
-                      value={care.medicine}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        updateSelectedPetLocal((pet) => ({
-                          ...pet,
-                          care: {
-                            ...pet.care,
-                            [activeCareKey]: {
-                              ...pet.care[activeCareKey],
-                              medicine: value,
-                            },
-                          },
-                        }));
-                      }}
-                      onBlur={() => void persistCareProfile(activeCareKey, { medicine: care.medicine })}
-                    />
-
-                    <label htmlFor={`${activeCareKey}_interval`}>Интервал до следующей процедуры, дней</label>
-                    <input
-                      id={`${activeCareKey}_interval`}
-                      min="1"
-                      placeholder="Например, 365"
-                      type="number"
-                      value={care.intervalDays}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        updateSelectedPetLocal((pet) => ({
-                          ...pet,
-                          care: {
-                            ...pet.care,
-                            [activeCareKey]: {
-                              ...pet.care[activeCareKey],
-                              intervalDays: value,
-                            },
-                          },
-                        }));
-                      }}
-                      onBlur={() => void persistCareProfile(activeCareKey, { intervalDays: care.intervalDays })}
-                    />
-
-                    <label>Напоминания</label>
-                    <div className="reminders">
-                      {DEFAULT_REMINDERS.map((day) => (
-                        <label key={day} className="reminder-option">
-                          <input
-                            checked={care.reminders.includes(day)}
-                            type="checkbox"
-                            onChange={(event) => {
-                              const nextReminders = event.target.checked
-                                ? [...care.reminders, day]
-                                : care.reminders.filter((value) => value !== day);
-                              const normalizedReminders = [...new Set(nextReminders)].sort((left, right) => right - left);
-
-                              updateSelectedPetLocal((pet) => ({
-                                ...pet,
-                                care: {
-                                  ...pet.care,
-                                  [activeCareKey]: {
-                                    ...pet.care[activeCareKey],
-                                    reminders: normalizedReminders,
-                                  },
+                    {careEntryMode === "reminder" ? (
+                      <>
+                        <label htmlFor={`${activeCareKey}_date`}>Дата следующей вакцинации / обработки</label>
+                        <input
+                          id={`${activeCareKey}_date`}
+                          type="date"
+                          value={care.date}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            updateSelectedPetLocal((pet) => ({
+                              ...pet,
+                              care: {
+                                ...pet.care,
+                                [activeCareKey]: {
+                                  ...pet.care[activeCareKey],
+                                  date: value,
                                 },
-                              }));
-                              void persistCareProfile(activeCareKey, { reminders: normalizedReminders });
-                            }}
-                          />
-                          <span>за {day} {pluralizeDays(day)}</span>
-                        </label>
-                      ))}
-                    </div>
+                              },
+                            }));
+                            void persistCareProfile(activeCareKey, { date: value });
+                          }}
+                        />
+                        <p className="hint">
+                          Укажите будущую дату, и NoraCare сохранит ее как план без добавления записи в историю.
+                        </p>
 
-                    <label htmlFor={`${activeCareKey}_note`}>Заметка</label>
-                    <textarea
-                      id={`${activeCareKey}_note`}
-                      placeholder="Например, реакция, рекомендации врача или важные детали"
-                      value={care.note}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        updateSelectedPetLocal((pet) => ({
-                          ...pet,
-                          care: {
-                            ...pet.care,
-                            [activeCareKey]: {
-                              ...pet.care[activeCareKey],
-                              note: value,
-                            },
-                          },
-                        }));
-                      }}
-                      onBlur={() => void persistCareProfile(activeCareKey, { note: care.note })}
-                    />
+                        <label htmlFor={`${activeCareKey}_medicine`}>Препарат</label>
+                        <input
+                          id={`${activeCareKey}_medicine`}
+                          placeholder="Название препарата"
+                          value={care.medicine}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            updateSelectedPetLocal((pet) => ({
+                              ...pet,
+                              care: {
+                                ...pet.care,
+                                [activeCareKey]: {
+                                  ...pet.care[activeCareKey],
+                                  medicine: value,
+                                },
+                              },
+                            }));
+                          }}
+                          onBlur={() => void persistCareProfile(activeCareKey, { medicine: care.medicine })}
+                        />
 
-                    <button className="primary-btn inline-care-action" type="button" onClick={() => void addHistoryRecord(activeCareKey)}>
-                      Добавить запись в историю
-                    </button>
+                        <label htmlFor={`${activeCareKey}_interval`}>Интервал до следующей процедуры, дней</label>
+                        <input
+                          id={`${activeCareKey}_interval`}
+                          min="1"
+                          placeholder="Например, 365"
+                          type="number"
+                          value={care.intervalDays}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            updateSelectedPetLocal((pet) => ({
+                              ...pet,
+                              care: {
+                                ...pet.care,
+                                [activeCareKey]: {
+                                  ...pet.care[activeCareKey],
+                                  intervalDays: value,
+                                },
+                              },
+                            }));
+                          }}
+                          onBlur={() => void persistCareProfile(activeCareKey, { intervalDays: care.intervalDays })}
+                        />
+
+                        <label>Напоминания</label>
+                        <div className="reminders">
+                          {DEFAULT_REMINDERS.map((day) => (
+                            <label key={day} className="reminder-option">
+                              <input
+                                checked={care.reminders.includes(day)}
+                                type="checkbox"
+                                onChange={(event) => {
+                                  const nextReminders = event.target.checked
+                                    ? [...care.reminders, day]
+                                    : care.reminders.filter((value) => value !== day);
+                                  const normalizedReminders = [...new Set(nextReminders)].sort((left, right) => right - left);
+
+                                  updateSelectedPetLocal((pet) => ({
+                                    ...pet,
+                                    care: {
+                                      ...pet.care,
+                                      [activeCareKey]: {
+                                        ...pet.care[activeCareKey],
+                                        reminders: normalizedReminders,
+                                      },
+                                    },
+                                  }));
+                                  void persistCareProfile(activeCareKey, { reminders: normalizedReminders });
+                                }}
+                              />
+                              <span>за {day} {pluralizeDays(day)}</span>
+                            </label>
+                          ))}
+                        </div>
+
+                        <label htmlFor={`${activeCareKey}_note`}>Заметка</label>
+                        <textarea
+                          id={`${activeCareKey}_note`}
+                          placeholder="Например, реакция, рекомендации врача или важные детали"
+                          value={care.note}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            updateSelectedPetLocal((pet) => ({
+                              ...pet,
+                              care: {
+                                ...pet.care,
+                                [activeCareKey]: {
+                                  ...pet.care[activeCareKey],
+                                  note: value,
+                                },
+                              },
+                            }));
+                          }}
+                          onBlur={() => void persistCareProfile(activeCareKey, { note: care.note })}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <label htmlFor={`${activeCareKey}_completed_date`}>Дата сделанной процедуры</label>
+                        <input
+                          id={`${activeCareKey}_completed_date`}
+                          type="date"
+                          value={completedCareDraft.date}
+                          onChange={(event) =>
+                            updateCompletedCareDraft(activeCareKey, (current) => ({
+                              ...current,
+                              date: event.target.value,
+                            }))
+                          }
+                        />
+
+                        <label htmlFor={`${activeCareKey}_completed_medicine`}>Препарат</label>
+                        <input
+                          id={`${activeCareKey}_completed_medicine`}
+                          placeholder="Название препарата"
+                          value={completedCareDraft.medicine}
+                          onChange={(event) =>
+                            updateCompletedCareDraft(activeCareKey, (current) => ({
+                              ...current,
+                              medicine: event.target.value,
+                            }))
+                          }
+                        />
+
+                        <label htmlFor={`${activeCareKey}_completed_interval`}>Интервал до следующей процедуры, дней</label>
+                        <input
+                          id={`${activeCareKey}_completed_interval`}
+                          min="1"
+                          placeholder="Например, 365"
+                          type="number"
+                          value={completedCareDraft.intervalDays}
+                          onChange={(event) =>
+                            updateCompletedCareDraft(activeCareKey, (current) => ({
+                              ...current,
+                              intervalDays: event.target.value,
+                            }))
+                          }
+                        />
+
+                        <label>Напоминания после этой процедуры</label>
+                        <div className="reminders">
+                          {DEFAULT_REMINDERS.map((day) => (
+                            <label key={day} className="reminder-option">
+                              <input
+                                checked={completedCareDraft.reminders.includes(day)}
+                                type="checkbox"
+                                onChange={(event) => {
+                                  const nextReminders = event.target.checked
+                                    ? [...completedCareDraft.reminders, day]
+                                    : completedCareDraft.reminders.filter((value) => value !== day);
+                                  const normalizedReminders = [...new Set(nextReminders)].sort((left, right) => right - left);
+
+                                  updateCompletedCareDraft(activeCareKey, (current) => ({
+                                    ...current,
+                                    reminders: normalizedReminders,
+                                  }));
+                                }}
+                              />
+                              <span>за {day} {pluralizeDays(day)}</span>
+                            </label>
+                          ))}
+                        </div>
+
+                        <label htmlFor={`${activeCareKey}_completed_note`}>Заметка</label>
+                        <textarea
+                          id={`${activeCareKey}_completed_note`}
+                          placeholder="Например, реакция, рекомендации врача или важные детали"
+                          value={completedCareDraft.note}
+                          onChange={(event) =>
+                            updateCompletedCareDraft(activeCareKey, (current) => ({
+                              ...current,
+                              note: event.target.value,
+                            }))
+                          }
+                        />
+
+                        <button className="primary-btn inline-care-action" type="button" onClick={() => void addHistoryRecord(activeCareKey)}>
+                          Сохранить в историю
+                        </button>
+                      </>
+                    )}
 
                     <div className="history-section">
                       <h4 className="history-title">История</h4>
                       {!care.history.length ? (
-                        <p className="meta-text">Пока записей нет. Добавьте первую запись выше.</p>
+                        <p className="meta-text">Пока записей нет. На вкладке «Добавить сделанное» можно внести уже пройденную процедуру отдельно от будущего плана.</p>
                       ) : (
                         <div className="history-list">
                           {care.history.map((record) => (
@@ -875,6 +1089,17 @@ export function NoraCareApp() {
           ) : null}
         </div>
       </section>
+      {pendingPetPhoto ? (
+        <PhotoCropModal
+          file={pendingPetPhoto}
+          onCancel={() => setPendingPetPhoto(null)}
+          onConfirm={(croppedFile) => {
+            setPetPhotoFile(croppedFile);
+            replacePetPhotoPreview(URL.createObjectURL(croppedFile));
+            setPendingPetPhoto(null);
+          }}
+        />
+      ) : null}
     </main>
   );
 }

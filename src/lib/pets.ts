@@ -35,6 +35,23 @@ export type CareHistoryInput = {
   reminders?: number[];
 };
 
+function resolveNextDueDate(
+  draftDate: string | null,
+  intervalDays: number | null,
+  latestHistory: Pick<CareHistoryRow, "procedureDate" | "intervalDays"> | null,
+) {
+  // If the user entered a date in the form, treat it as the next planned procedure
+  // even when nothing has been completed yet.
+  if (draftDate) {
+    return draftDate;
+  }
+
+  const anchorDate = latestHistory?.procedureDate ?? null;
+  const interval = intervalDays ?? latestHistory?.intervalDays ?? null;
+
+  return calculateNextDate(anchorDate, interval);
+}
+
 function mapHistoryRow(row: CareHistoryRow): CareHistoryItem {
   return {
     id: row.id,
@@ -45,6 +62,18 @@ function mapHistoryRow(row: CareHistoryRow): CareHistoryItem {
     reminders: sortReminderOffsets(row.reminderOffsets ?? DEFAULT_REMINDERS),
     createdAt: toIsoString(row.createdAt) ?? new Date().toISOString(),
   };
+}
+
+function resolvePetPhotoUrl(petRow: PetRow) {
+  if (!petRow.photoBlobUrl) {
+    return null;
+  }
+
+  if (petRow.photoBlobUrl.startsWith("http://") || petRow.photoBlobUrl.startsWith("https://")) {
+    return petRow.photoBlobUrl;
+  }
+
+  return `/api/pets/${petRow.id}/photo`;
 }
 
 function buildPetResponse(petRow: PetRow, profileRows: CareProfileRow[], historyRows: CareHistoryRow[]): ApiPet {
@@ -87,7 +116,7 @@ function buildPetResponse(petRow: PetRow, profileRows: CareProfileRow[], history
     breed: petRow.breed,
     birthDate: petRow.birthDate ?? "",
     importantInfo: petRow.importantInfo ?? "",
-    photoUrl: petRow.photoBlobUrl ?? null,
+    photoUrl: resolvePetPhotoUrl(petRow),
     care,
   };
 }
@@ -253,14 +282,19 @@ export async function deletePetForUser(userId: string, petId: string) {
   await db.delete(pets).where(eq(pets.id, petId));
 }
 
-export async function updatePetPhotoForUser(userId: string, petId: string, photoUrl: string) {
+export async function getPetPhotoReferenceForUser(userId: string, petId: string) {
+  const petRow = await ensurePetOwned(userId, petId);
+  return petRow.photoBlobUrl ?? null;
+}
+
+export async function updatePetPhotoForUser(userId: string, petId: string, photoBlobPath: string) {
   const db = getDb();
   await ensurePetOwned(userId, petId);
 
   await db
     .update(pets)
     .set({
-      photoBlobUrl: photoUrl,
+      photoBlobUrl: photoBlobPath,
       updatedAt: new Date(),
     })
     .where(eq(pets.id, petId));
@@ -289,8 +323,6 @@ export async function updateCareProfileForUser(
   const intervalDays = input.intervalDays !== undefined ? input.intervalDays : profile.intervalDays;
   const note = input.note !== undefined ? input.note?.trim() || null : profile.note;
   const reminders = input.reminders ? sortReminderOffsets(input.reminders) : sortReminderOffsets(profile.reminderOffsets);
-  const anchorDate = draftDate ?? latestHistory?.procedureDate ?? null;
-  const interval = intervalDays ?? latestHistory?.intervalDays ?? null;
 
   await db
     .update(careProfiles)
@@ -300,7 +332,7 @@ export async function updateCareProfileForUser(
       intervalDays,
       note,
       reminderOffsets: reminders,
-      nextDueDate: calculateNextDate(anchorDate, interval),
+      nextDueDate: resolveNextDueDate(draftDate, intervalDays, latestHistory),
       updatedAt: new Date(),
     })
     .where(eq(careProfiles.id, profile.id));
@@ -368,13 +400,11 @@ export async function deleteCareHistoryForUser(
 
   const profile = await ensureCareProfileRow(petId, careType);
   const latestHistory = await getLatestHistoryRecord(petId, careType);
-  const anchorDate = profile.draftDate ?? latestHistory?.procedureDate ?? null;
-  const interval = profile.intervalDays ?? latestHistory?.intervalDays ?? null;
 
   await db
     .update(careProfiles)
     .set({
-      nextDueDate: calculateNextDate(anchorDate, interval),
+      nextDueDate: resolveNextDueDate(profile.draftDate, profile.intervalDays, latestHistory),
       updatedAt: new Date(),
     })
     .where(eq(careProfiles.id, profile.id));

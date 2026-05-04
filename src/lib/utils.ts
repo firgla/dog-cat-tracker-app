@@ -1,4 +1,5 @@
 import { addDays, format, parseISO } from "date-fns";
+import { ru } from "date-fns/locale";
 
 import { BREEDS, CARE_TYPES, DEFAULT_REMINDERS, type CareTypeKey, type PetKind } from "./constants";
 import type { CareState } from "./types";
@@ -13,7 +14,7 @@ export function formatDate(dateValue: string | null | undefined, dateFormat = "d
   }
 
   try {
-    return format(parseISO(dateValue), dateFormat);
+    return format(parseISO(dateValue), dateFormat, { locale: ru });
   } catch {
     return "";
   }
